@@ -1,0 +1,3 @@
+[submodule "src/bitsy"]
+	path = src/bitsy
+	url = https://github.com/le-doux/bitsy.git

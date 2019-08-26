@@ -1,0 +1,21 @@
+{
+  "name": "bitsy-savior",
+  "version": "0.1.0",
+  "description": "bitsy editor by Adam Le Doux put in a desktop app. can update game data in exported html files on your disk. super useful when you work with bitsy-hacks",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aloelazoe/bitsy-savior.git"
+  },
+  "author": "Elkie Nova",
+  "bugs": {
+    "url": "https://github.com/aloelazoe/bitsy-savior/issues"
+  },
+  "homepage": "https://github.com/aloelazoe/bitsy-savior#readme",
+  "devDependencies": {
+    "electron": "^6.0.4"
+  }
+}
