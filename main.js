@@ -6,8 +6,9 @@ const {
   dialog
 } = require('electron');
 
-global.gameHtmlPath = 'test/game.html';
-global.bitsyDataPath = 'test/data.bitsy';
+const paths = global.paths = {};
+paths.patch = 'test/game.html';
+paths.export = 'test/data.bitsy';
 
 function createWindow () {
   const { screen } = require('electron');
@@ -26,19 +27,75 @@ function createWindow () {
   win.on('page-title-updated', (e) => e.preventDefault());
 
   // TODO: make a function to get status string for window title
-  win.setTitle(`${gameHtmlPath}; ${bitsyDataPath}`);
+  win.setTitle(`${paths.patch}; ${paths.export}`);
 
+  // SET UP NEW MENU ITEMS
   // TODO: replace with a new menu from template
   const menu = Menu.getApplicationMenu();
   const fileMenu = menu.items.find(i => i.label === 'File');
-  const saveCommand = new MenuItem({
-    click: getSavePathFromDialog,
-    type: 'normal',
-    label: 'Save',
-    accelerator: 'CommandOrControl+S'
-  });
-  fileMenu.submenu.append(saveCommand);
+  [
+    new MenuItem({
+      label: 'Patch game data',
+      accelerator: 'CommandOrControl+D',
+      type: 'normal',
+      click: async function() {
+        // TODO: validate patch path, only accept valid html with bitsy-data element
+        if (!paths.patch) paths.patch = await dialog.showOpenDialog() || paths.patch;
+        tryPatch(paths.patch);
+      },
+    }),
+    new MenuItem({
+      label: 'Export game data',
+      accelerator: 'CommandOrControl+E',
+      type: 'normal',
+      click: async function() {
+        // TODO: when setting new export path validate it first: confirm overwrite if the file already exists
+        if (!paths.export) paths.export = await dialog.showSaveDialog() || paths.export;
+        tryExport(paths.export);
+      },
+    }),
+    new MenuItem({
+      label: 'Patch game data in...',
+      accelerator: 'CommandOrControl+Shift+D',
+      type: 'normal',
+      click: async function() {
+        // TODO: validate patch path, only accept valid html with bitsy-data element
+        paths.patch = await dialog.showOpenDialog() || paths.patch;
+        tryPatch(paths.patch);
+      },
+    }),
+    new MenuItem({
+      label: 'Export game data to...',
+      accelerator: 'CommandOrControl+Shift+E',
+      type: 'normal',
+      click: async function() {
+        // TODO: when setting new export path validate it first: confirm overwrite if the file already exists
+        paths.export = await dialog.showSaveDialog() || paths.export;
+        tryExport(paths.export);
+      },
+    }),
+    new MenuItem({
+      label: 'Patch & export',
+      accelerator: 'CommandOrControl+S',
+      type: 'normal',
+      click: async function() {
+        // call respective menus somehow? or make a function for serializing the world at the same time for both?
+      },
+    }),
+  ].forEach(Menu.prototype.append, fileMenu.submenu);
   Menu.setApplicationMenu(menu);
+}
+
+async function tryPatch(p) {
+  if (!p) return;
+  console.log('patching game data in ', p);
+  // TODO: actually patch game data
+}
+
+async function tryExport(p) {
+  if (!p) return;
+  console.log('exporting game data to ', p);
+  // TODO: actually export game data
 }
 
 async function getSavePathFromDialog (event, focusedWindow, focusedWebContents) {
