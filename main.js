@@ -32,6 +32,9 @@ const paths = global.paths = {
     if (opts.hasOwnProperty('export')) this._export.unsaved = opts.export;
     this.updateTitle();
   },
+  get unsavedChanges() {
+    return (this._patch.value && this._patch.unsaved) || (this._export.value && this._export.unsaved);
+  },
   updateTitle: function() {
     const p = (this._patch.value || '(File -> Patch game data)') + (this._patch.unsaved ? '*' : '');
     const e = (this._export.value || '(File -> Export game data)') + (this._export.unsaved ? '*' : '');
@@ -41,7 +44,7 @@ const paths = global.paths = {
   }
 };
 
-function createWindow () {
+function createWindow() {
   const { screen } = require('electron');
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
   win = new BrowserWindow({
@@ -145,7 +148,7 @@ function createWindow () {
           paths.export = p || paths.export;
         }
         tryPatchAndExport()
-          .then(() => console.log('patch and export successful'))
+          .then(() => console.log('tryPatchAndExport finished without errors'))
           .catch(err => {
             console.error(err);
             dialog.showErrorBox(err.name, err.stack);
@@ -154,6 +157,42 @@ function createWindow () {
     }),
   ].forEach(Menu.prototype.append, fileMenu.submenu);
   Menu.setApplicationMenu(menu);
+
+  // ASK BEFORE CLOSING WHEN YOU HAVE UNSAVED CHANGES
+  win.on('close', function(event) {
+    if (paths.unsavedChanges) {
+      event.preventDefault();
+      dialog.showMessageBox({
+        type: 'question',
+        buttons: ['Save and exit', 'Discard changes', 'Cancel'],
+        defaultId: 0,
+        message: 'You have unsaved changes. Do you want to save or discard them?',
+        cancelId: 2,
+        noLink: true
+      }).then(({response: b}) => {
+        switch (b) {
+          case 0:
+            console.log('save and exit');
+            tryPatchAndExport()
+              .then(() => console.log('tryPatchAndExport finished without errors'))
+              .then(() => win.destroy())
+              .catch(err => {
+                console.error(err);
+                dialog.showErrorBox(err.name, err.stack);
+              });
+            break;
+          case 1:
+            console.log('discard changes');
+            win.destroy();
+            break;
+          case 2:
+            console.log('cancel exit');
+            return;
+        }
+      });
+    }
+  });
+
 }
 
 async function tryPatch(data) {
