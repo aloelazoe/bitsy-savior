@@ -6,14 +6,44 @@ const {
   dialog
 } = require('electron');
 
-const paths = global.paths = {};
-paths.patch = 'test/game.html';
-paths.export = 'test/data.bitsy';
+let win;
+
+global.autosave = false;
+const paths = global.paths = {
+  _patch: { value: null, unsaved: false },
+  _export: { value: null, unsaved: false },
+  get patch() {
+    return this._patch.value;
+  },
+  set patch(val) {
+    this._patch.value = val;
+    this.updateTitle();
+  },
+  get export() {
+    return this._export.value;
+  },
+  set export(val) {
+    this._export.value = val;
+    this.updateTitle();
+  },
+  markUnsaved: function (opts = { patch: true, export: true }) {
+    if (opts.hasOwnProperty('patch')) this._patch.unsaved = opts.patch;
+    if (opts.hasOwnProperty('export')) this._export.unsaved = opts.export;
+    this.updateTitle();
+  },
+  updateTitle: function() {
+    const p = (this._patch.value || '(File -> Patch game data)') + (this._patch.unsaved ? '*' : '');
+    const e = (this._export.value || '(File -> Export game data)') + (this._export.unsaved ? '*' : '');
+    if (win) {
+      win.setTitle(`Patch: ${p}   Export: ${e}`);
+    }
+  }
+};
 
 function createWindow () {
   const { screen } = require('electron');
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-  const win = new BrowserWindow({
+  win = new BrowserWindow({
     width: width,
     height: height,
     fullscreenWindowTitle: true,
@@ -26,8 +56,7 @@ function createWindow () {
   win.webContents.openDevTools();
   win.on('page-title-updated', (e) => e.preventDefault());
 
-  // TODO: make a function to get status string for window title
-  win.setTitle(`${paths.patch}; ${paths.export}`);
+  paths.updateTitle();
 
   // SET UP NEW MENU ITEMS
   // TODO: replace with a new menu from template
@@ -40,8 +69,11 @@ function createWindow () {
       type: 'normal',
       click: async function() {
         // TODO: validate patch path, only accept valid html with bitsy-data element
-        if (!paths.patch) paths.patch = await dialog.showOpenDialog() || paths.patch;
-        tryPatch(paths.patch);
+        if (!paths.patch) {
+          const { filePaths: [p] } = await dialog.showOpenDialog({ buttonLabel: 'Patch' });
+          paths.patch = p || paths.patch;
+        }
+        tryPatch();
       },
     }),
     new MenuItem({
@@ -49,9 +81,11 @@ function createWindow () {
       accelerator: 'CommandOrControl+E',
       type: 'normal',
       click: async function() {
-        // TODO: when setting new export path validate it first: confirm overwrite if the file already exists
-        if (!paths.export) paths.export = await dialog.showSaveDialog() || paths.export;
-        tryExport(paths.export);
+        if (!paths.export) {
+          const { filePath: p } = await dialog.showSaveDialog({ buttonLabel: 'Export' });
+          paths.export = p || paths.export;
+        }
+        tryExport();
       },
     }),
     new MenuItem({
@@ -60,8 +94,9 @@ function createWindow () {
       type: 'normal',
       click: async function() {
         // TODO: validate patch path, only accept valid html with bitsy-data element
-        paths.patch = await dialog.showOpenDialog() || paths.patch;
-        tryPatch(paths.patch);
+        const { filePaths: [p] } = await dialog.showOpenDialog({ buttonLabel: 'Patch' });
+        paths.patch = p || paths.patch;
+        tryPatch();
       },
     }),
     new MenuItem({
@@ -69,44 +104,63 @@ function createWindow () {
       accelerator: 'CommandOrControl+Shift+E',
       type: 'normal',
       click: async function() {
-        // TODO: when setting new export path validate it first: confirm overwrite if the file already exists
-        paths.export = await dialog.showSaveDialog() || paths.export;
-        tryExport(paths.export);
+        const { filePath: p } = await dialog.showSaveDialog({ buttonLabel: 'Export' });
+        paths.export = p || paths.export;
+        tryExport();
       },
     }),
     new MenuItem({
-      label: 'Patch & export',
+      label: 'Patch and export',
       accelerator: 'CommandOrControl+S',
       type: 'normal',
       click: async function() {
-        // call respective menus somehow? or make a function for serializing the world at the same time for both?
+        // make sure game data will be the same for both patching and exporting
+        if (!paths.patch) {
+          const { filePaths: [p] } = await dialog.showOpenDialog({ buttonLabel: 'Patch' });
+          paths.patch = p || paths.patch;
+        }
+        if (!paths.export) {
+          const { filePath: p } = await dialog.showSaveDialog({ buttonLabel: 'Export' });
+          paths.export = p || paths.export;
+        }
+        tryPatchAndExport();
       },
     }),
   ].forEach(Menu.prototype.append, fileMenu.submenu);
   Menu.setApplicationMenu(menu);
 }
 
-async function tryPatch(p) {
-  if (!p) return;
-  console.log('patching game data in ', p);
+async function tryPatch() {
+  if (!paths.patch) return;
+  console.log('patching game data in ', paths.patch);
   // TODO: actually patch game data
+  // if successful, unmark as unsaved
+  paths.markUnsaved({ patch: false });
 }
 
-async function tryExport(p) {
-  if (!p) return;
-  console.log('exporting game data to ', p);
+async function tryExport() {
+  if (!paths.export) return;
+  console.log('exporting game data to ', paths.export);
   // TODO: actually export game data
+  // if successful, unmark as unsaved
+  paths.markUnsaved({ export: false });
 }
 
-async function getSavePathFromDialog (event, focusedWindow, focusedWebContents) {
-  console.log('clicked on file dialog option');
-  // TODO: attach dialog to window
-  // showSaveDialog returns a promise that resolves into filepath and whether dialog was canceled
-  // dialog title doesn't show up on macos
-  console.log(await dialog.showSaveDialog({ title: 'choose html file where you wish to update game data' }));
+async function tryPatchAndExport() {
+  if (!paths.patch && !paths.export) return;
+  // TODO: serialize game data to update both files
+  if (paths.patch) {
+    console.log('patching game data in ', paths.patch);
+    // TODO: actually patch game data
+    // if successful, unmark as unsaved
+    paths.markUnsaved({ patch: false });
+  }
+  if (paths.export) {
+    console.log('exporting game data to ', paths.export);
+    // TODO: actually export game data
+    // if successful, unmark as unsaved
+    paths.markUnsaved({ export: false });
+  }
 }
 
-// TODO: make a whole new menu from a template to use,
-// instead of electron's default one. do the template in a separate module
-// Menu.setApplicationMenu(thatNewMenu);
 app.on('ready', createWindow);

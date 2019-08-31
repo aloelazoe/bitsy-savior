@@ -12,22 +12,36 @@ function injectBitsySavior() {
   refreshGameDataOrig = window.refreshGameData;
   window.refreshGameData = function () {
     refreshGameDataOrig.call(window);
-    fse.outputFile(remote.getGlobal('paths').export, getFullGameData())
-      .catch(err => {
-        console.error(err);
-      });
-    fse.readFile(remote.getGlobal('paths').patch, 'utf8')
-      .then(bitsyHtml => {
-        const updatedGameHtml = bitsyHtml.replace(
-          /(<script type="text\/bitsyGameData" id="exportedGameData">)[\s\S]*?(<\/script>)/,
-          (m, openingTag, closingTag) => {
-            return `${openingTag}\n${getFullGameData()}\n${closingTag}`;
-        });
-        return fse.outputFile(remote.getGlobal('paths').patch, updatedGameHtml);
-      })
-      .catch(err => {
-        console.error(err);
-      });
+    const paths = remote.getGlobal('paths');
+    paths.markUnsaved();
+    if (remote.getGlobal('autosave')) {
+      if (paths.export) {
+        console.log('autosaving ', paths.export);
+        fse.outputFile(paths.export, getFullGameData())
+          .then(() => paths.markUnsaved({ export: false }))
+          .catch(err => {
+            // TODO: replace with native error window
+            console.error(err);
+          });
+      }
+      if (paths.patch) {
+        console.log('autosaving ', paths.patch);
+        fse.readFile(paths.patch, 'utf8')
+          .then(bitsyHtml => {
+            const updatedGameHtml = bitsyHtml.replace(
+              /(<script type="text\/bitsyGameData" id="exportedGameData">)[\s\S]*?(<\/script>)/,
+              (m, openingTag, closingTag) => {
+                return `${openingTag}\n${getFullGameData()}\n${closingTag}`;
+            });
+            return fse.outputFile(paths.patch, updatedGameHtml);
+          })
+          .then(() => paths.markUnsaved({ patch: false }))
+          .catch(err => {
+            // TODO: replace with native error window
+            console.error(err);
+          });
+      }
+    }
   }
   // TODO: patch reset game data so that it will reset save paths
   // make sure they are reset before refreshGameData is called again
