@@ -1,3 +1,4 @@
+const fse = require('fs-extra');
 const {
   app,
   BrowserWindow,
@@ -73,7 +74,12 @@ function createWindow () {
           const { filePaths: [p] } = await dialog.showOpenDialog({ buttonLabel: 'Patch' });
           paths.patch = p || paths.patch;
         }
-        tryPatch();
+        tryPatch()
+          .then(() => console.log('patched ', paths.patch))
+          .catch(err => {
+            console.error(err);
+            dialog.showErrorBox(err.name, err.stack);
+          });
       },
     }),
     new MenuItem({
@@ -85,7 +91,12 @@ function createWindow () {
           const { filePath: p } = await dialog.showSaveDialog({ buttonLabel: 'Export' });
           paths.export = p || paths.export;
         }
-        tryExport();
+        tryExport()
+          .then(() => console.log('exported to ', paths.export))
+          .catch(err => {
+            console.error(err);
+            dialog.showErrorBox(err.name, err.stack);
+          });
       },
     }),
     new MenuItem({
@@ -96,7 +107,12 @@ function createWindow () {
         // TODO: validate patch path, only accept valid html with bitsy-data element
         const { filePaths: [p] } = await dialog.showOpenDialog({ buttonLabel: 'Patch' });
         paths.patch = p || paths.patch;
-        tryPatch();
+        tryPatch()
+          .then(() => console.log('patched ', paths.patch))
+          .catch(err => {
+            console.error(err);
+            dialog.showErrorBox(err.name, err.stack);
+          });
       },
     }),
     new MenuItem({
@@ -106,7 +122,12 @@ function createWindow () {
       click: async function() {
         const { filePath: p } = await dialog.showSaveDialog({ buttonLabel: 'Export' });
         paths.export = p || paths.export;
-        tryExport();
+        tryExport()
+          .then(() => console.log('exported to ', paths.export))
+          .catch(err => {
+            console.error(err);
+            dialog.showErrorBox(err.name, err.stack);
+          });
       },
     }),
     new MenuItem({
@@ -123,44 +144,65 @@ function createWindow () {
           const { filePath: p } = await dialog.showSaveDialog({ buttonLabel: 'Export' });
           paths.export = p || paths.export;
         }
-        tryPatchAndExport();
+        tryPatchAndExport()
+          .then(() => console.log('patch and export successful'))
+          .catch(err => {
+            console.error(err);
+            dialog.showErrorBox(err.name, err.stack);
+          });
       },
     }),
   ].forEach(Menu.prototype.append, fileMenu.submenu);
   Menu.setApplicationMenu(menu);
 }
 
-async function tryPatch() {
+async function tryPatch(data) {
   if (!paths.patch) return;
   console.log('patching game data in ', paths.patch);
-  // TODO: actually patch game data
-  // if successful, unmark as unsaved
+  try {
+    data = await ensureGameData(data);
+    const bitsyHtml = await fse.readFile(paths.patch, 'utf8');
+    const updatedGameHtml = bitsyHtml.replace(
+      /(<script type="text\/bitsyGameData" id="exportedGameData">)[\s\S]*?(<\/script>)/,
+      (m, openingTag, closingTag) => {
+        return `${openingTag}\n${data}\n${closingTag}`;
+    });
+    await fse.outputFile(paths.patch, updatedGameHtml);
+  } catch (err) {
+    // TODO: use both native error window and console.error when handling this error outside
+    throw new Error(`couldn't patch ${paths.patch}\n${err}`);
+  }
   paths.markUnsaved({ patch: false });
 }
 
-async function tryExport() {
+async function tryExport(data) {
   if (!paths.export) return;
   console.log('exporting game data to ', paths.export);
-  // TODO: actually export game data
-  // if successful, unmark as unsaved
+  try {
+    data = await ensureGameData(data);
+    await fse.outputFile(paths.export, data);
+  } catch (err) {
+    // TODO: use both native error window and console.error when handling this error outside
+    throw new Error(`couldn't export to ${paths.export}\n${err}`);
+  }
   paths.markUnsaved({ export: false });
 }
 
-async function tryPatchAndExport() {
+async function tryPatchAndExport(data) {
   if (!paths.patch && !paths.export) return;
-  // TODO: serialize game data to update both files
-  if (paths.patch) {
-    console.log('patching game data in ', paths.patch);
-    // TODO: actually patch game data
-    // if successful, unmark as unsaved
-    paths.markUnsaved({ patch: false });
+  // make sure game data will be the same for both patching and exporting
+  data = await ensureGameData(data);
+  await Promise.all([tryPatch(data), tryExport(data)]);
+}
+
+async function ensureGameData(data) {
+  try {
+    data = data || await win.webContents.executeJavaScript('window.getFullGameData()');
+  } catch (err) {
+    throw new Error("couldn't serialize game data\n", err);
   }
-  if (paths.export) {
-    console.log('exporting game data to ', paths.export);
-    // TODO: actually export game data
-    // if successful, unmark as unsaved
-    paths.markUnsaved({ export: false });
-  }
+  if (!data) throw new Error('game data is empty');
+  return data;
 }
 
 app.on('ready', createWindow);

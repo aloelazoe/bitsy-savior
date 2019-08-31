@@ -42,6 +42,7 @@ function injectBitsySavior() {
           });
       }
     }
+    // TODO: instead call tryPatchAndExport from main process, print autosave successful or print error
   }
   // TODO: patch reset game data so that it will reset save paths
   // make sure they are reset before refreshGameData is called again
