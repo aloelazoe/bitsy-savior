@@ -1,10 +1,13 @@
 const fse = require('fs-extra');
 const {
-  remote
+  remote,
+  ipcRenderer
 } = require('electron');
 
 document.addEventListener('DOMContentLoaded', injectBitsySavior);
 console.log('hiya from bitsy-savior');
+
+window.resetGameDataOrig = null;
 
 function injectBitsySavior() {
   console.log('injecting bitsy savior');
@@ -15,6 +18,7 @@ function injectBitsySavior() {
     refreshGameDataOrig.call(window);
     paths.markUnsaved();
     if (remote.getGlobal('autosave')) {
+      // TODO: instead call tryPatchAndExport from main process, print autosave successful or print error
       if (paths.export) {
         console.log('autosaving ', paths.export);
         fse.outputFile(paths.export, getFullGameData())
@@ -42,15 +46,17 @@ function injectBitsySavior() {
           });
       }
     }
-    // TODO: instead call tryPatchAndExport from main process, print autosave successful or print error
   };
-  // TODO: patch reset game data so that it will reset save paths
-  // make sure they are reset before refreshGameData is called again
-  const resetGameDataOrig = window.resetGameData;
+  // make sure resetting game data will open unsaved changes dialog and reset save paths
+  window.resetGameDataOrig = window.resetGameData;
   window.resetGameData = function() {
-    // TODO: call unsaved changes dialog from the main process
-    // if didn't cancel in unsaved changes dialog, reset the paths and call the original function
-    paths.reset();
-    resetGameDataOrig.call(window);
+    ipcRenderer.send('new-game-data', 'resetGameDataOrig');
   };
+  // TODO: patch on_game_data_change() to check if new data has a different title
+  // open unsaved changes dialog and reset paths if it does
 }
+
+ipcRenderer.on('call', (event, func) => {
+  console.log("i'm going to call ", window[func]);
+  if (window[func]) window[func]();
+});

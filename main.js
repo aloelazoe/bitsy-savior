@@ -4,7 +4,8 @@ const {
   BrowserWindow,
   Menu,
   MenuItem,
-  dialog
+  dialog,
+  ipcMain
 } = require('electron');
 
 let win;
@@ -248,5 +249,46 @@ async function ensureGameData(data) {
   if (!data) throw new Error('game data is empty');
   return data;
 }
+
+ipcMain.on('new-game-data', (event, bitsyCallbackName) => {
+  console.log('new-game-data was raised');
+  if (paths.unsavedChanges) {
+    dialog.showMessageBox({
+      type: 'question',
+      buttons: ['Save', "Don't save", 'Cancel'],
+      defaultId: 0,
+      message: 'Do you want to save chagnes before loading new game data?',
+      cancelId: 2,
+      noLink: true
+    }).then(({response: b}) => {
+      switch (b) {
+        case 0:
+          console.log('save before loading new data');
+          tryPatchAndExport()
+            .then(() => console.log('tryPatchAndExport finished without errors'))
+            .then(() => {
+              paths.reset();
+              event.reply('call', bitsyCallbackName);
+            })
+            .catch(err => {
+              console.error(err);
+              dialog.showErrorBox(err.name, err.stack);
+            });
+          break;
+        case 1:
+          console.log("don't save before loading new data");
+          paths.reset();
+          event.reply('call', bitsyCallbackName);
+          break;
+        case 2:
+          console.log('cancel loading new data');
+          return;
+      }
+    });
+  } else {
+    paths.reset();
+    event.reply('call', bitsyCallbackName);
+  }
+});
 
 app.on('ready', createWindow);
