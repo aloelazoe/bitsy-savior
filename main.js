@@ -35,6 +35,11 @@ const paths = global.paths = {
   get unsavedChanges() {
     return (this._patch.value && this._patch.unsaved) || (this._export.value && this._export.unsaved);
   },
+  reset: function() {
+    this._patch = { value: null, unsaved: false };
+    this._export = { value: null, unsaved: false };
+    this.updateTitle();
+  },
   updateTitle: function() {
     const p = (this._patch.value || '(File -> Patch game data)') + (this._patch.unsaved ? '*' : '');
     const e = (this._export.value || '(File -> Export game data)') + (this._export.unsaved ? '*' : '');

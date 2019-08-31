@@ -8,11 +8,11 @@ console.log('hiya from bitsy-savior');
 
 function injectBitsySavior() {
   console.log('injecting bitsy savior');
+  const paths = remote.getGlobal('paths');
   // patch refreshGameData
-  refreshGameDataOrig = window.refreshGameData;
+  const refreshGameDataOrig = window.refreshGameData;
   window.refreshGameData = function () {
     refreshGameDataOrig.call(window);
-    const paths = remote.getGlobal('paths');
     paths.markUnsaved();
     if (remote.getGlobal('autosave')) {
       if (paths.export) {
@@ -43,7 +43,14 @@ function injectBitsySavior() {
       }
     }
     // TODO: instead call tryPatchAndExport from main process, print autosave successful or print error
-  }
+  };
   // TODO: patch reset game data so that it will reset save paths
   // make sure they are reset before refreshGameData is called again
+  const resetGameDataOrig = window.resetGameData;
+  window.resetGameData = function() {
+    // TODO: call unsaved changes dialog from the main process
+    // if didn't cancel in unsaved changes dialog, reset the paths and call the original function
+    paths.reset();
+    resetGameDataOrig.call(window);
+  };
 }
