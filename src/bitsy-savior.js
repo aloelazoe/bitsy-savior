@@ -19,6 +19,7 @@ function injectBitsySavior() {
     paths.markUnsaved();
     if (remote.getGlobal('autosave')) {
       // TODO: instead call tryPatchAndExport from main process, print autosave successful or print error
+      // perhaps make ipc event 'on-refresh-game-data' in main
       if (paths.export) {
         console.log('autosaving ', paths.export);
         fse.outputFile(paths.export, getFullGameData())
@@ -47,13 +48,25 @@ function injectBitsySavior() {
       }
     }
   };
+
   // make sure resetting game data will open unsaved changes dialog and reset save paths
   window.resetGameDataOrig = window.resetGameData;
   window.resetGameData = function() {
     ipcRenderer.send('new-game-data', 'resetGameDataOrig');
   };
-  // TODO: patch on_game_data_change() to check if new data has a different title
-  // open unsaved changes dialog and reset paths if it does
+
+  window.tryLoadingGameData = function (data) {
+    const oldData = document.getElementById("game_data").value;
+    try {
+      document.getElementById("game_data").value = data;
+      window.on_game_data_change();
+    } catch (err) {
+      document.getElementById("game_data").value = oldData;
+      window.on_game_data_change();
+      const errMessage = 'Game data is invalid\n' + err.stack;
+      return errMessage;
+    }
+  };
 }
 
 ipcRenderer.on('call', (event, func) => {

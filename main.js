@@ -1,4 +1,5 @@
 const fse = require('fs-extra');
+const path = require('path');
 const {
   app,
   BrowserWindow,
@@ -73,6 +74,21 @@ function createWindow() {
   const menu = Menu.getApplicationMenu();
   const fileMenu = menu.items.find(i => i.label === 'File');
   [
+    new MenuItem({
+      label: 'Open',
+      accelerator: 'CommandOrControl+O',
+      type: 'normal',
+      click: async function() {
+        const { filePaths: [p] } = await dialog.showOpenDialog();
+        if (!p) return;
+        loadGameDataFromFile(p)
+          .then(() => console.log('loading game data from ', p))
+          .catch(err => {
+            console.error(err);
+            dialog.showErrorBox(err.name, err.stack);
+          });
+      },
+    }),
     new MenuItem({
       label: 'Patch game data',
       accelerator: 'CommandOrControl+D',
@@ -201,6 +217,38 @@ function createWindow() {
 
 }
 
+async function loadGameDataFromFile(p) {
+  // TODO: open a dialog if there are unsaved changes
+  const isHtml = (path.extname(p) === '.html');
+  const fileContents = await fse.readFile(p, 'utf8');
+  let data;
+  if (isHtml) {
+    const dataMatch = fileContents.match(/<script type="text\/bitsyGameData" id="exportedGameData">\s*([\s\S]*?)<\/script>/);
+    if (!dataMatch || !(dataMatch[1])) {
+      throw new Error(`couldn't find game data in ${p}`);
+    } else {
+      data = dataMatch[1];
+    }
+  } else {
+    data = fileContents;
+  }
+  // attempt to load new game data. will resolve into an error message if something goes wrong
+  // tryLoadingGameData will revert to a previous game data if it catches an error
+  const errMessage = await win.webContents.executeJavaScript(`window.tryLoadingGameData(\`${data}\`)`);
+  if (errMessage) {
+    throw new Error(errMessage);
+  }
+  // if we are here, data was valid and was loaded successfully. update paths
+  paths.reset();
+  if (isHtml) {
+    paths.patch = p;
+    paths.markUnsaved({ patch: false });
+  } else {
+    paths.export = p;
+    paths.markUnsaved({ export: false });
+  }
+}
+
 async function tryPatch(data) {
   if (!paths.patch) return;
   console.log('patching game data in ', paths.patch);
@@ -214,7 +262,6 @@ async function tryPatch(data) {
     });
     await fse.outputFile(paths.patch, updatedGameHtml);
   } catch (err) {
-    // TODO: use both native error window and console.error when handling this error outside
     throw new Error(`couldn't patch ${paths.patch}\n${err}`);
   }
   paths.markUnsaved({ patch: false });
@@ -227,7 +274,6 @@ async function tryExport(data) {
     data = await ensureGameData(data);
     await fse.outputFile(paths.export, data);
   } catch (err) {
-    // TODO: use both native error window and console.error when handling this error outside
     throw new Error(`couldn't export to ${paths.export}\n${err}`);
   }
   paths.markUnsaved({ export: false });
@@ -257,7 +303,7 @@ ipcMain.on('new-game-data', (event, bitsyCallbackName) => {
       type: 'question',
       buttons: ['Save', "Don't save", 'Cancel'],
       defaultId: 0,
-      message: 'Do you want to save chagnes before loading new game data?',
+      message: 'Do you want to save changes before loading new game data?',
       cancelId: 2,
       noLink: true
     }).then(({response: b}) => {
