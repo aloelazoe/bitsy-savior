@@ -81,12 +81,14 @@ function createWindow() {
       click: async function() {
         const { filePaths: [p] } = await dialog.showOpenDialog();
         if (!p) return;
-        loadGameDataFromFile(p)
-          .then(() => console.log('loading game data from ', p))
-          .catch(err => {
-            console.error(err);
-            dialog.showErrorBox(err.name, err.stack);
-          });
+        checkUnsavedThen(() => {
+          loadGameDataFromFile(p)
+            .then(() => console.log('loaded game data from ', p))
+            .catch(err => {
+              console.error(err);
+              dialog.showErrorBox(err.name, err.stack);
+            });
+        }, 'opening new file');
       },
     }),
     new MenuItem({
@@ -182,43 +184,12 @@ function createWindow() {
 
   // ASK BEFORE CLOSING WHEN YOU HAVE UNSAVED CHANGES
   win.on('close', function(event) {
-    if (paths.unsavedChanges) {
-      event.preventDefault();
-      dialog.showMessageBox({
-        type: 'question',
-        buttons: ['Save and exit', 'Discard changes', 'Cancel'],
-        defaultId: 0,
-        message: 'You have unsaved changes. Do you want to save or discard them?',
-        cancelId: 2,
-        noLink: true
-      }).then(({response: b}) => {
-        switch (b) {
-          case 0:
-            console.log('save and exit');
-            tryPatchAndExport()
-              .then(() => console.log('tryPatchAndExport finished without errors'))
-              .then(() => win.destroy())
-              .catch(err => {
-                console.error(err);
-                dialog.showErrorBox(err.name, err.stack);
-              });
-            break;
-          case 1:
-            console.log('discard changes');
-            win.destroy();
-            break;
-          case 2:
-            console.log('cancel exit');
-            return;
-        }
-      });
-    }
+    event.preventDefault();
+    checkUnsavedThen(() => win.destroy(), 'closing bitsy-savior');
   });
-
 }
 
 async function loadGameDataFromFile(p) {
-  // TODO: open a dialog if there are unsaved changes
   const isHtml = (path.extname(p) === '.html');
   const fileContents = await fse.readFile(p, 'utf8');
   let data;
@@ -298,43 +269,44 @@ async function ensureGameData(data) {
 
 ipcMain.on('new-game-data', (event, bitsyCallbackName) => {
   console.log('new-game-data was raised');
-  if (paths.unsavedChanges) {
-    dialog.showMessageBox({
+  checkUnsavedThen(() => {
+    paths.reset();
+    event.reply('call', bitsyCallbackName);
+  }, 'resetting game data');
+});
+
+function checkUnsavedThen(nextAction, description = '') {
+  if (!paths.unsavedChanges) {
+    return nextAction();
+  }
+  dialog.showMessageBox({
       type: 'question',
-      buttons: ['Save', "Don't save", 'Cancel'],
+      buttons: ['Save', 'Discard', 'Cancel'],
       defaultId: 0,
-      message: 'Do you want to save changes before loading new game data?',
+      message: `You have unsaved changes. Do you want to save or discard them${description && ' before ' + description}?`,
       cancelId: 2,
       noLink: true
     }).then(({response: b}) => {
       switch (b) {
         case 0:
-          console.log('save before loading new data');
+          console.log(`save changes${description && ' before ' + description}`);
           tryPatchAndExport()
             .then(() => console.log('tryPatchAndExport finished without errors'))
-            .then(() => {
-              paths.reset();
-              event.reply('call', bitsyCallbackName);
-            })
+            .then(nextAction)
             .catch(err => {
               console.error(err);
               dialog.showErrorBox(err.name, err.stack);
             });
           break;
         case 1:
-          console.log("don't save before loading new data");
-          paths.reset();
-          event.reply('call', bitsyCallbackName);
+          console.log(`discard unsaved changes${description && ' before ' + description}`);
+          return nextAction();
           break;
         case 2:
-          console.log('cancel loading new data');
+          console.log(`cancel ${description}`);
           return;
       }
     });
-  } else {
-    paths.reset();
-    event.reply('call', bitsyCallbackName);
-  }
-});
+}
 
 app.on('ready', createWindow);
