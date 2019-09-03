@@ -42,14 +42,45 @@ const paths = global.paths = {
     this._export = { value: null, unsaved: false };
     this.updateTitle();
   },
+  saveToStorage: function() {
+    storage.set('paths', { _patch: this._patch, _export: this._export });
+  },
+  setFromStorage: function() {
+    const storedPaths = storage.get('paths');
+    if (!storedPaths) return;
+    Object.assign(this, storedPaths);
+    this.updateTitle();
+  },
   updateTitle: function() {
-    const p = (this._patch.value || '(File -> Patch game data)') + (this._patch.unsaved ? '*' : '');
-    const e = (this._export.value || '(File -> Export game data)') + (this._export.unsaved ? '*' : '');
     if (win) {
+      const p = (this._patch.value || '(File -> Patch game data)') + (this._patch.unsaved ? '*' : '');
+      const e = (this._export.value || '(File -> Export game data)') + (this._export.unsaved ? '*' : '');
       win.setTitle(`Patch: ${p}   Export: ${e}`);
     }
   }
 };
+
+const storage = {
+  _path: path.join(app.getPath('userData'), 'storage.json'),
+  _getStorageObj: function() {
+    try {
+      const storageObj = fse.readJsonSync(this._path);
+      return storageObj;
+    } catch {
+      fse.outputJsonSync(this._path, {});
+      return {};
+    }
+  },
+  get: function(name) {
+    const storageObj = this._getStorageObj();
+    return storageObj[name];
+  },
+  set: function(name, value) {
+    const storageObj = this._getStorageObj();
+    storageObj[name] = value;
+    fse.outputJsonSync(this._path, storageObj);
+  },
+}
 
 function createWindow() {
   const { screen } = require('electron');
@@ -65,8 +96,10 @@ function createWindow() {
   })
   win.loadFile('src/bitsy/editor/index.html');
   // win.webContents.openDevTools();
+
   win.on('page-title-updated', (e) => e.preventDefault());
   paths.updateTitle();
+  paths.setFromStorage();
 
   // SET UP NEW MENU ITEMS
   // TODO: replace with a new menu from template
@@ -140,7 +173,10 @@ function createWindow() {
   // ASK BEFORE CLOSING WHEN YOU HAVE UNSAVED CHANGES
   win.on('close', function(event) {
     event.preventDefault();
-    checkUnsavedThen(() => win.destroy(), 'closing bitsy-savior');
+    checkUnsavedThen(() => {
+      paths.saveToStorage();
+      win.destroy();
+    }, 'closing bitsy-savior');
   });
 }
 
