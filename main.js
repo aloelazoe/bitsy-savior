@@ -96,12 +96,9 @@ function createWindow() {
       accelerator: 'CommandOrControl+D',
       type: 'normal',
       click: async function() {
-        // TODO: validate patch path, only accept valid html with bitsy-data element
-        if (!paths.patch) {
-          const { filePaths: [p] } = await dialog.showOpenDialog({ buttonLabel: 'Patch' });
-          paths.patch = p || paths.patch;
-        }
-        tryPatch()
+        let p = paths.patch;
+        if (!p) ({ filePaths: [p] } = await dialog.showOpenDialog({ buttonLabel: 'Patch' }));
+        tryPatch(p)
           .then(() => console.log('patched ', paths.patch))
           .catch(err => {
             console.error(err);
@@ -114,11 +111,9 @@ function createWindow() {
       accelerator: 'CommandOrControl+E',
       type: 'normal',
       click: async function() {
-        if (!paths.export) {
-          const { filePath: p } = await dialog.showSaveDialog({ buttonLabel: 'Export' });
-          paths.export = p || paths.export;
-        }
-        tryExport()
+        let p = paths.export;
+        if (!p) ({ filePath: p } = await dialog.showSaveDialog({ buttonLabel: 'Export' }));
+        tryExport(p)
           .then(() => console.log('exported to ', paths.export))
           .catch(err => {
             console.error(err);
@@ -131,10 +126,8 @@ function createWindow() {
       accelerator: 'CommandOrControl+Shift+D',
       type: 'normal',
       click: async function() {
-        // TODO: validate patch path, only accept valid html with bitsy-data element
         const { filePaths: [p] } = await dialog.showOpenDialog({ buttonLabel: 'Patch' });
-        paths.patch = p || paths.patch;
-        tryPatch()
+        tryPatch(p)
           .then(() => console.log('patched ', paths.patch))
           .catch(err => {
             console.error(err);
@@ -148,8 +141,7 @@ function createWindow() {
       type: 'normal',
       click: async function() {
         const { filePath: p } = await dialog.showSaveDialog({ buttonLabel: 'Export' });
-        paths.export = p || paths.export;
-        tryExport()
+        tryExport(p)
           .then(() => console.log('exported to ', paths.export))
           .catch(err => {
             console.error(err);
@@ -162,16 +154,11 @@ function createWindow() {
       accelerator: 'CommandOrControl+S',
       type: 'normal',
       click: async function() {
-        // make sure game data will be the same for both patching and exporting
-        if (!paths.patch) {
-          const { filePaths: [p] } = await dialog.showOpenDialog({ buttonLabel: 'Patch' });
-          paths.patch = p || paths.patch;
-        }
-        if (!paths.export) {
-          const { filePath: p } = await dialog.showSaveDialog({ buttonLabel: 'Export' });
-          paths.export = p || paths.export;
-        }
-        tryPatchAndExport()
+        let pp = paths.patch;
+        if (!pp) ({ filePaths: [pp] } = await dialog.showOpenDialog({ buttonLabel: 'Patch' }));
+        let pe = paths.export;
+        if (!pe) ({ filePath: pe } = await dialog.showSaveDialog({ buttonLabel: 'Export' }));
+        tryPatchAndExport(pp, pe)
           .then(() => console.log('tryPatchAndExport finished without errors'))
           .catch(err => {
             console.error(err);
@@ -220,41 +207,46 @@ async function loadGameDataFromFile(p) {
   }
 }
 
-async function tryPatch(data) {
-  if (!paths.patch) return;
-  console.log('patching game data in ', paths.patch);
+async function tryPatch(p, data) {
+  if (!p) return;
+  console.log('patching game data in ', p);
   try {
     data = await ensureGameData(data);
-    const bitsyHtml = await fse.readFile(paths.patch, 'utf8');
+    const bitsyHtml = await fse.readFile(p, 'utf8');
+    let foundGameData = false;
     const updatedGameHtml = bitsyHtml.replace(
       /(<script type="text\/bitsyGameData" id="exportedGameData">)[\s\S]*?(<\/script>)/,
       (m, openingTag, closingTag) => {
+        foundGameData = true;
         return `${openingTag}\n${data}\n${closingTag}`;
     });
-    await fse.outputFile(paths.patch, updatedGameHtml);
+    if (!foundGameData) throw new Error(`Couldn't find game data`);
+    paths.patch = p;
+    await fse.outputFile(p, updatedGameHtml);
   } catch (err) {
-    throw new Error(`couldn't patch ${paths.patch}\n${err}`);
+    throw new Error(`Couldn't patch ${p}\n${err}`);
   }
   paths.markUnsaved({ patch: false });
 }
 
-async function tryExport(data) {
-  if (!paths.export) return;
-  console.log('exporting game data to ', paths.export);
+async function tryExport(p, data) {
+  if (!p) return;
+  console.log('exporting game data to ', p);
   try {
     data = await ensureGameData(data);
-    await fse.outputFile(paths.export, data);
+    paths.export = p;
+    await fse.outputFile(p, data);
   } catch (err) {
-    throw new Error(`couldn't export to ${paths.export}\n${err}`);
+    throw new Error(`couldn't export to ${p}\n${err}`);
   }
   paths.markUnsaved({ export: false });
 }
 
-async function tryPatchAndExport(data) {
-  if (!paths.patch && !paths.export) return;
+async function tryPatchAndExport(pp, pe, data) {
+  if (!pp && !pe) return;
   // make sure game data will be the same for both patching and exporting
   data = await ensureGameData(data);
-  await Promise.all([tryPatch(data), tryExport(data)]);
+  await Promise.all([tryPatch(pp, data), tryExport(pe, data)]);
 }
 
 async function ensureGameData(data) {
@@ -290,7 +282,7 @@ function checkUnsavedThen(nextAction, description = '') {
       switch (b) {
         case 0:
           console.log(`save changes${description && ' before ' + description}`);
-          tryPatchAndExport()
+          tryPatchAndExport(paths.patch, paths.export)
             .then(() => console.log('tryPatchAndExport finished without errors'))
             .then(nextAction)
             .catch(err => {
