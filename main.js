@@ -202,13 +202,19 @@ async function loadGameDataFromFile(p) {
   } else {
     data = fileContents;
   }
+  // remember if autosaving was on and turn it off before trying to load new game data
+  // this will ensure new game data won't be auto-saved to the current files
+  const currentAutosaveSettings = global.autosave;
+  global.autosave = false;
   // attempt to load new game data. will resolve into an error message if something goes wrong
   // tryLoadingGameData will revert to a previous game data if it catches an error
   const errMessage = await win.webContents.executeJavaScript(`window.tryLoadingGameData(\`${data}\`)`);
+  global.autosave = currentAutosaveSettings;
   if (errMessage) {
     throw new Error(errMessage);
   }
-  // if we are here, data was valid and was loaded successfully. update paths
+  // if we are here, data was valid and was loaded successfully
+  // reset paths and make them point to the newly opened file
   paths.reset();
   if (isHtml) {
     paths.patch = p;
@@ -274,12 +280,23 @@ async function ensureGameData(data) {
   return data;
 }
 
-ipcMain.on('new-game-data', (event, bitsyCallbackName) => {
-  console.log('new-game-data was raised');
+ipcMain.on('reset-game-data', (event, bitsyCallbackName) => {
+  console.log('reset-game-data was raised');
   checkUnsavedThen(() => {
     paths.reset();
     event.reply('call', bitsyCallbackName);
   }, 'resetting game data');
+});
+
+ipcMain.on('autosave', () => {
+  if (!(paths.patch || paths.export)) return;
+  console.log('autosaving...');
+  tryPatchAndExport(paths.patch, paths.export)
+    .then(console.log)
+    .catch(err => {
+      console.error(err);
+      dialog.showErrorBox(err.name, err.stack);
+    });
 });
 
 function checkUnsavedThen(nextAction, description = '') {
