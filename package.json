@@ -4,7 +4,10 @@
   "description": "bitsy editor by Adam Le Doux put in a desktop app. can update game data in exported html files on your disk. super useful when you work with bitsy-hacks",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "clean": "rm -rf ./build/* && echo 'cleaned build location'",
+    "build-macos": "electron-packager . --platform=darwin --arch=x64 --out=build/ --overwrite --icon=src/bitsy/editor/icons/bitsy.icns --ignore='src\/bitsy\/(?!editor)' --ignore='test' && echo 'built for macos'",
+    "build":  "npm run clean && npm run build-macos"
   },
   "repository": {
     "type": "git",
@@ -16,6 +19,10 @@
   },
   "homepage": "https://github.com/aloelazoe/bitsy-savior#readme",
   "devDependencies": {
-    "electron": "^6.0.4"
+    "electron": "^6.0.4",
+    "electron-packager": "^14.0.5"
+  },
+  "dependencies": {
+    "fs-extra": "^8.1.0"
   }
 }
