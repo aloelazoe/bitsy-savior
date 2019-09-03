@@ -127,7 +127,7 @@ function createWindow() {
         const pp = paths.patch || await showPatchDialog();
         const pe = paths.export || await showExportDialog();
         tryPatchAndExport(pp, pe)
-          .then(() => console.log(`${pp? 'patched: ' + pp: ''}${(pp && pe)? '\n': ''}${pe? 'exported: ' + pp: ''}`))
+          .then(console.log)
           .catch(err => {
             console.error(err);
             dialog.showErrorBox(err.name, err.stack);
@@ -170,7 +170,7 @@ async function patchData(alwaysWithDialog = false) {
   let p = paths.patch;
   if (!p || alwaysWithDialog === true) p = await showPatchDialog();
   tryPatch(p)
-    .then(() => console.log('patched:', paths.patch))
+    .then(console.log)
     .catch(err => {
       console.error(err);
       dialog.showErrorBox(err.name, err.stack);
@@ -181,7 +181,7 @@ async function exportData(alwaysWithDialog = false) {
   let p = paths.export;
   if (!p || alwaysWithDialog === true) p = await showExportDialog();
   tryExport(p)
-    .then(() => console.log('exported:', paths.export))
+    .then(console.log)
     .catch(err => {
       console.error(err);
       dialog.showErrorBox(err.name, err.stack);
@@ -220,7 +220,7 @@ async function loadGameDataFromFile(p) {
 }
 
 async function tryPatch(p, data) {
-  if (!p) return;
+  if (!p) return 'patch path is empty';
   console.log('patching game data in:', p);
   try {
     data = await ensureGameData(data);
@@ -239,10 +239,11 @@ async function tryPatch(p, data) {
     throw new Error(`Couldn't patch ${p}\n${err}`);
   }
   paths.markUnsaved({ patch: false });
+  return 'patch successful';
 }
 
 async function tryExport(p, data) {
-  if (!p) return;
+  if (!p) return 'export path is empty';
   console.log('exporting game data to:', p);
   try {
     data = await ensureGameData(data);
@@ -252,13 +253,15 @@ async function tryExport(p, data) {
     throw new Error(`Couldn't export ${p}\n${err}`);
   }
   paths.markUnsaved({ export: false });
+  return 'export successful';
 }
 
 async function tryPatchAndExport(pp, pe, data) {
-  if (!pp && !pe) return;
+  if (!pp && !pe) return 'patch and export paths are empty';
   // make sure game data will be the same for both patching and exporting
   data = await ensureGameData(data);
   await Promise.all([tryPatch(pp, data), tryExport(pe, data)]);
+  return `${pp ? 'patch ' : ''}${(pp && pe)? '& ' : ''}${pe ? 'export ' : ''}successful`;
 }
 
 async function ensureGameData(data) {
@@ -295,7 +298,7 @@ function checkUnsavedThen(nextAction, description = '') {
         case 0:
           console.log(`save changes${description && ' before ' + description}`);
           tryPatchAndExport(paths.patch, paths.export)
-            .then(() => console.log(`${pp? 'patched: ' + pp: ''}${(pp && pe)? '\n': ''}${pe? 'exported: ' + pp: ''}`))
+            .then(console.log)
             .then(nextAction)
             .catch(err => {
               console.error(err);
