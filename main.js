@@ -130,7 +130,7 @@ function createWindow() {
     }),
     new MenuItem({
       label: 'Patch game data',
-      accelerator: 'CommandOrControl+D',
+      accelerator: 'CommandOrControl+S',
       type: 'normal',
       click: patchData,
     }),
@@ -142,7 +142,7 @@ function createWindow() {
     }),
     new MenuItem({
       label: 'Patch game data in...',
-      accelerator: 'CommandOrControl+Shift+D',
+      accelerator: 'CommandOrControl+Shift+S',
       type: 'normal',
       click: () => patchData(true),
     }),
@@ -154,7 +154,7 @@ function createWindow() {
     }),
     new MenuItem({
       label: 'Patch and export',
-      accelerator: 'CommandOrControl+S',
+      accelerator: 'CommandOrControl+D',
       type: 'normal',
       click: async function() {
         const pp = paths.patch || await showPatchDialog();
