@@ -6,7 +6,8 @@ const {
   Menu,
   MenuItem,
   dialog,
-  ipcMain
+  ipcMain,
+  shell
 } = require('electron');
 
 let win;
@@ -165,6 +166,23 @@ function createWindow() {
             console.error(err);
             dialog.showErrorBox(err.name, err.stack);
           });
+      },
+    }),
+    new MenuItem({
+      label: 'Run',
+      accelerator: 'CommandOrControl+X',
+      type: 'normal',
+      click: () => {
+        if (!paths.patch) return;
+        if (paths.unsavedChanges) {
+          tryPatchAndExport(paths.patch, paths.export)
+          .then(console.log)
+          .catch(err => {
+            console.error(err);
+            dialog.showErrorBox(err.name, err.stack);
+          });
+        }
+        shell.openItem(paths.patch);
       },
     }),
   ].forEach(Menu.prototype.append, fileMenu.submenu);
