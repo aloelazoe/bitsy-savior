@@ -196,6 +196,13 @@ function createWindow() {
       win.destroy();
     }, 'closing bitsy-savior');
   });
+
+  // open links in a default browser instead of making new electron windows
+  win.webContents.on('new-window', (event, url) => {
+    event.preventDefault();
+    shell.openExternal(url)
+      .catch(console.error);
+  });
 }
 
 async function showPatchDialog() {
