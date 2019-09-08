@@ -15,11 +15,12 @@ there are shortcuts for each action (use `cmd` instead of `ctrl` if you are on m
 1. `ctrl+o`: load game data from file and remember this file as a saving path for when you make changes in the editor. it is advised that you use this command instead of `upload game` from the download panel or copy-pasting new bitsy data in game data panel. it works more reliably when importing from html and provides a safer way to switch between different bitsy games. there are two kinds of files you can open:
     * text files with bitsy data ending with `.txt` or `.bitsy`
     * html files with a bitsy game
-2. `ctrl+s`: patch game data in html file with bitsy game without modifying anything else. so you can add hacks to your html file, then patch data, and hacks are still going to be there
+2. `ctrl+s`: patch game data in html file with a bitsy game without modifying anything else. you can add hacks to your html file, patch data, and hacks are still going to be there
 3. `ctrl+e`: save game data as a separate text file
 4. `ctrl+shift+s`: patch game data in html file, always opens a file-choosing dialog, like 'save as' option you would often see in other programs
 5. `ctrl+shift+e`: export game data, always show file-choosing dialog
 6. `ctrl+d`: patch and export at the same time
+7. `ctrl+r`: run bitsy game in browser - will attempt to open html file you are patching
 
 ## how to run bitsy-savior from source
 you will need [node.js and npm](https://nodejs.org/en/) to be installed

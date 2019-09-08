@@ -101,8 +101,8 @@ const menuTemplate = [
       },
       { type: 'separator' },
       {
-        label: 'Run',
-        accelerator: 'CommandOrControl+X',
+        label: 'Run bitsy game in browser',
+        accelerator: 'CommandOrControl+R',
         type: 'normal',
         click: () => {
           if (!paths.patch) return;
@@ -154,8 +154,6 @@ const menuTemplate = [
   {
     label: 'View',
     submenu: [
-      { role: 'reload' },
-      { role: 'forcereload' },
       { role: 'toggledevtools' },
       { type: 'separator' },
       { role: 'resetzoom' },
