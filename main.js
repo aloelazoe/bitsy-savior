@@ -16,6 +16,8 @@ const menu = require('./src/menu');
 global.autosave = false;
 
 function createWindow() {
+  paths.setFromStorage();
+
   const { screen } = require('electron');
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
   const win = global.bitsyWindow = new BrowserWindow({
@@ -32,7 +34,6 @@ function createWindow() {
 
   win.on('page-title-updated', (e) => e.preventDefault());
   paths.updateTitle();
-  paths.setFromStorage();
 
   Menu.setApplicationMenu(menu);
 
@@ -59,6 +60,11 @@ ipcMain.on('reset-game-data', (event, bitsyCallbackName) => {
     paths.reset();
     event.reply('call', bitsyCallbackName);
   }, 'resetting game data');
+});
+
+ipcMain.on('show-error-message', (event, errMessage) => {
+  console.error(errMessage);
+  dialog.showErrorBox('Error', errMessage);
 });
 
 ipcMain.on('autosave', () => {

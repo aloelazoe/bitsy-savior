@@ -17,12 +17,43 @@ const paths = require('./paths');
 
 const isMac = process.platform === 'darwin';
 
+const prefsSubmenu = [
+  {
+    label: 'Set editor patch',
+    click: async function () {
+      const { filePaths: [p] } = await dialog.showOpenDialog({
+        filters: [{
+          name: 'javascript file to execute when bitsy-editor has finished loading',
+          extensions: ['js']
+        }]
+      });
+      if (!p) return;
+      paths.editorPatch = p;
+      global.bitsyWindow.reload();
+      console.log('set editor patch to', paths.editorPatch);
+    }
+  },
+  {
+    label: 'Reset editor patch',
+    click: () => {
+      paths.editorPatch = null;
+      global.bitsyWindow.reload();
+      console.log('reset editorPatch');
+    }
+  },
+];
+
 const menuTemplate = [
   // { role: 'appMenu' }
   ...(isMac ? [{
     label: app.getName(),
     submenu: [
       { role: 'about' },
+      { type: 'separator' },
+      {
+        label: 'Preferences',
+        submenu: prefsSubmenu
+      },
       { type: 'separator' },
       { role: 'services' },
       { type: 'separator' },
@@ -117,6 +148,16 @@ const menuTemplate = [
           shell.openItem(paths.patch);
         },
       },
+      ...(!isMac ? [{
+        label: app.getName(),
+        submenu: [
+          { type: 'separator' },
+          {
+            label: 'Settings',
+            submenu: prefsSubmenu
+          }
+        ]
+      }] : []),
       { type: 'separator' },
       isMac ? { role: 'close' } : { role: 'quit' }
     ]
@@ -154,6 +195,15 @@ const menuTemplate = [
   {
     label: 'View',
     submenu: [
+      {
+        role: 'reload',
+        accelerator: 'F5'
+      },
+      {
+        role: 'forcereload',
+        accelerator: 'Shift+F5'
+      },
+      { type: 'separator' },
       { role: 'toggledevtools' },
       { type: 'separator' },
       { role: 'resetzoom' },

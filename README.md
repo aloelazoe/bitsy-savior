@@ -22,6 +22,15 @@ there are shortcuts for each action (use `cmd` instead of `ctrl` if you are on m
 6. `ctrl+d`: patch and export at the same time
 7. `ctrl+r`: run bitsy game in browser - will attempt to open html file you are patching
 
+## custom editor patch
+you can choose a javascript file to execute when bitsy-editor has finished loading
+
+go to `File -> Settings -> Set editor patch` if you are on windows or linux
+
+or `bitsy-savior -> Preferences -> Set editor patch` if you are on mac
+
+this is useful to tweak style and layout of the editor, for [example](https://gist.github.com/aloelazoe/0e66f25714eca46aa30e718b6454f880) to have wider text areas for room and drawing names
+
 ## how to run bitsy-savior from source
 you will need [node.js and npm](https://nodejs.org/en/) to be installed
 1. clone or download this repository

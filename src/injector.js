@@ -9,8 +9,17 @@ console.log('hiya from bitsy-savior');
 window.resetGameDataOrig = null;
 
 function injectBitsySavior() {
-  console.log('injecting bitsy savior');
   const paths = remote.getGlobal('paths');
+  // inject editor style and layout modifications
+  if (paths.editorPatch) {
+    try {
+      require(paths.editorPatch);
+    } catch (err) {
+      ipcRenderer.send('show-error-message', `Couldn't load editor patch:\n${paths.editorPatch}\n${err.stack}`);
+    }
+  }
+
+  console.log('injecting bitsy savior');
   // patch refreshGameData
   const refreshGameDataOrig = window.refreshGameData;
   window.refreshGameData = function () {
