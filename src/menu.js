@@ -1,3 +1,4 @@
+const path = require('path');
 const {
   app,
   Menu,
@@ -18,6 +19,8 @@ const paths = require('./paths');
 const isMac = process.platform === 'darwin';
 const isLinux = process.platform === 'linux';
 
+const aboutPanelImagePath = path.join(app.getAppPath(), 'src/bitsy/editor/image/cat5.png');
+
 if (isMac || isLinux) {
   app.setAboutPanelOptions({
     applicationName: 'bitsy-savior',
@@ -26,7 +29,7 @@ if (isMac || isLinux) {
     // version: 'electron build version', // will be set automatically on mac
     credits: 'Elkie Nova (@aloelazoe)',
     website: 'https://github.com/aloelazoe/bitsy-savior', // todo: change to itchio page when i publish,
-    iconPath: 'src/bitsy/editor/image/cat5.png'
+    iconPath: aboutPanelImagePath
   });
 }
 
@@ -262,7 +265,7 @@ const menuTemplate = [
                 title: 'bitsy-savior',
                 message: `bitsy-savior v${app.getVersion()}`,
                 detail: 'by Elkie Nova (@aloelazoe)',
-                icon: 'src/bitsy/editor/image/cat5.png'
+                icon: aboutPanelImagePath
               });
             }
           }
