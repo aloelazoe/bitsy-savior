@@ -32,8 +32,8 @@ or `bitsy-savior -> Preferences -> Set editor patch` if you are on mac
 this is useful to tweak style and layout of the editor, for [example](https://gist.github.com/aloelazoe/0e66f25714eca46aa30e718b6454f880) to have wider text areas for room and drawing names
 
 ## how to run bitsy-savior from source
-you will need [node.js and npm](https://nodejs.org/en/) to be installed
-1. clone or download this repository
-2. navigate to bitsy-savior folder with command line
-3. run `npm install`
-4. run `npm start`
+you will need [git](https://git-scm.com/) and [node.js](https://nodejs.org/en/) to be installed
+1. `git clone --recurse-submodule https://github.com/aloelazoe/bitsy-savior.git`
+2. `cd bitsy-savior`
+3. `npm install`
+4. `npm start`
