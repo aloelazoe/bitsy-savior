@@ -16,6 +16,19 @@ const {
 const paths = require('./paths');
 
 const isMac = process.platform === 'darwin';
+const isLinux = process.platform === 'linux';
+
+if (isMac || isLinux) {
+  app.setAboutPanelOptions({
+    applicationName: 'bitsy-savior',
+    applicationVersion: app.getVersion(),
+    // copyright: 'Copyright', // todo: add copyright when adam decides on bitsy license
+    // version: 'electron build version', // will be set automatically on mac
+    credits: 'Elkie Nova (@aloelazoe)',
+    website: 'https://github.com/aloelazoe/bitsy-savior', // todo: change to itchio page when i publish,
+    iconPath: 'src/bitsy/editor/image/cat5.png'
+  });
+}
 
 const prefsSubmenu = [
   {
@@ -148,16 +161,13 @@ const menuTemplate = [
           shell.openItem(paths.patch);
         },
       },
-      ...(!isMac ? [{
-        label: app.getName(),
-        submenu: [
-          { type: 'separator' },
-          {
-            label: 'Settings',
-            submenu: prefsSubmenu
-          }
-        ]
-      }] : []),
+      ...(!isMac ? [
+        { type: 'separator' },
+        {
+          label: 'Settings',
+          submenu: prefsSubmenu
+        }
+      ] : []),
       { type: 'separator' },
       isMac ? { role: 'close' } : { role: 'quit' }
     ]
@@ -233,11 +243,31 @@ const menuTemplate = [
     role: 'help',
     submenu: [
       {
-        label: 'Learn More',
+        label: 'Website',
         click: async () => {
           await shell.openExternal('https://github.com/aloelazoe/bitsy-savior');
         }
-      }
+      },
+      ...(!isMac ? [
+        { type: 'separator' },
+        {
+          label: 'About',
+          click: () => {
+            if (isLinux) {
+              app.showAboutPanel();
+            } else {
+              dialog.showMessageBox({
+                type: 'info',
+                buttons: [],
+                title: 'bitsy-savior',
+                message: `bitsy-savior v${app.getVersion()}`,
+                detail: 'by Elkie Nova (@aloelazoe)',
+                icon: 'src/bitsy/editor/image/cat5.png'
+              });
+            }
+          }
+        }
+      ] : []),
     ]
   }
 ]
