@@ -46,6 +46,7 @@ const prefsSubmenu = [
       });
       if (!p) return;
       paths.editorPatch = p;
+      paths.saveToStorage();
       global.bitsyWindow.reload();
       console.log('set editor patch to', paths.editorPatch);
     }
@@ -54,6 +55,7 @@ const prefsSubmenu = [
     label: 'Reset editor patch',
     click: () => {
       paths.editorPatch = null;
+      paths.saveToStorage();
       global.bitsyWindow.reload();
       console.log('reset editorPatch');
     }

@@ -47,6 +47,7 @@ async function saveNewHtml(html) {
   }
   paths.markUnsaved({ patch: false });
   paths.patch = p;
+  paths.saveToStorage();
   console.log('successfully saved as new html');
 }
 
@@ -55,6 +56,7 @@ async function patchData(alwaysWithDialog = false) {
   if (!p || alwaysWithDialog === true) p = await showPatchDialog();
   tryPatch(p)
     .then(console.log)
+    .then(() => {paths.saveToStorage()})
     .catch(reportError);
 }
 
@@ -63,6 +65,7 @@ async function exportData(alwaysWithDialog = false) {
   if (!p || alwaysWithDialog === true) p = await showExportDialog();
   tryExport(p)
     .then(console.log)
+    .then(() => {paths.saveToStorage()})
     .catch(reportError);
 }
 
@@ -108,6 +111,7 @@ async function tryPatchAndExport(pp, pe, data) {
   // make sure game data will be the same for both patching and exporting
   data = await ensureGameData(data);
   await Promise.all([tryPatch(pp, data), tryExport(pe, data)]);
+  paths.saveToStorage();
   return `${pp ? 'patch ' : ''}${(pp && pe)? '& ' : ''}${pe ? 'export ' : ''}successful`;
 }
 
@@ -193,6 +197,7 @@ async function loadGameDataFromFile(p) {
     paths.export = p;
     paths.markUnsaved({ export: false });
   }
+  paths.saveToStorage();
 }
 
 function reportError(err) {

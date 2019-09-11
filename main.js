@@ -44,7 +44,6 @@ function createWindow() {
   win.on('close', function(event) {
     event.preventDefault();
     checkUnsavedThen(() => {
-      paths.saveToStorage();
       win.destroy();
     }, 'closing bitsy-savior');
   });
@@ -69,6 +68,7 @@ ipcMain.on('reset-game-data', (event, bitsyCallbackName) => {
   console.log('reset-game-data was raised');
   checkUnsavedThen(() => {
     paths.reset();
+    paths.saveToStorage();
     event.reply('call', bitsyCallbackName);
   }, 'resetting game data');
 });

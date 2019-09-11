@@ -46,9 +46,11 @@ const paths = global.paths = {
   },
   updateTitle: function() {
     if (global.bitsyWindow) {
-      const p = (this._patch.value || '(File -> Patch game data)') + (this._patch.unsaved ? '*' : '');
-      const e = (this._export.value || '(File -> Export game data)') + (this._export.unsaved ? '*' : '');
-      global.bitsyWindow.setTitle(`Patch: ${p}   Export: ${e}`);
+      const p = (this._patch.value || '(File -> Patch game data)');
+      const e = (this._export.value || '(File -> Export game data)');
+      const pDot = this._patch.value && this._patch.unsaved ? '•' : '';
+      const eDot = this._export.value && this._export.unsaved ? '•' : '';
+      global.bitsyWindow.setTitle(`Patch: ${p}${pDot}   Export: ${e}${eDot}`);
     }
   }
 };
