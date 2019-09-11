@@ -9,7 +9,8 @@ const {
 const paths = require('./src/paths');
 const {
   tryPatchAndExport,
-  checkUnsavedThen
+  checkUnsavedThen,
+  reportError
 } = require('./src/utils');
 const menu = require('./src/menu');
 
@@ -72,10 +73,7 @@ ipcMain.on('autosave', () => {
   console.log('autosaving...');
   tryPatchAndExport(paths.patch, paths.export)
     .then(console.log)
-    .catch(err => {
-      console.error(err);
-      dialog.showErrorBox(err.name, err.stack);
-    });
+    .catch(reportError);
 });
 
 app.on('ready', createWindow);

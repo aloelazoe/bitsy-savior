@@ -12,7 +12,8 @@ const {
   exportData,
   tryPatchAndExport,
   checkUnsavedThen,
-  loadGameDataFromFile
+  loadGameDataFromFile,
+  reportError
 } = require('./utils');
 const paths = require('./paths');
 
@@ -99,10 +100,7 @@ const menuTemplate = [
           checkUnsavedThen(() => {
             loadGameDataFromFile(p)
               .then(() => console.log('loaded game data from:', p))
-              .catch(err => {
-                console.error(err);
-                dialog.showErrorBox(err.name, err.stack);
-              });
+              .catch(reportError);
           }, 'opening new file');
         },
       },
@@ -140,10 +138,7 @@ const menuTemplate = [
           const pe = paths.export || await showExportDialog();
           tryPatchAndExport(pp, pe)
             .then(console.log)
-            .catch(err => {
-              console.error(err);
-              dialog.showErrorBox(err.name, err.stack);
-            });
+            .catch(reportError);
         },
       },
       { type: 'separator' },
@@ -156,10 +151,7 @@ const menuTemplate = [
           if (paths.unsavedChanges) {
             tryPatchAndExport(paths.patch, paths.export)
             .then(console.log)
-            .catch(err => {
-              console.error(err);
-              dialog.showErrorBox(err.name, err.stack);
-            });
+            .catch(reportError);
           }
           shell.openItem(paths.patch);
         },

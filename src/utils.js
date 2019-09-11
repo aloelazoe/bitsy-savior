@@ -5,6 +5,8 @@ const {
 } = require('electron');
 const paths = require('./paths');
 
+// TODO: refactor everything with clean function composition
+
 async function showPatchDialog() {
   const { filePaths: [p] } = await dialog.showOpenDialog({
     buttonLabel: 'Patch',
@@ -32,10 +34,7 @@ async function patchData(alwaysWithDialog = false) {
   if (!p || alwaysWithDialog === true) p = await showPatchDialog();
   tryPatch(p)
     .then(console.log)
-    .catch(err => {
-      console.error(err);
-      dialog.showErrorBox(err.name, err.stack);
-    });
+    .catch(reportError);
 }
 
 async function exportData(alwaysWithDialog = false) {
@@ -43,10 +42,7 @@ async function exportData(alwaysWithDialog = false) {
   if (!p || alwaysWithDialog === true) p = await showExportDialog();
   tryExport(p)
     .then(console.log)
-    .catch(err => {
-      console.error(err);
-      dialog.showErrorBox(err.name, err.stack);
-    });
+    .catch(reportError);
 }
 
 async function tryPatch(p, data) {
@@ -124,10 +120,7 @@ function checkUnsavedThen(nextAction, description = '') {
           tryPatchAndExport(paths.patch, paths.export)
             .then(console.log)
             .then(nextAction)
-            .catch(err => {
-              console.error(err);
-              dialog.showErrorBox(err.name, err.stack);
-            });
+            .catch(reportError);
           break;
         case 1:
           console.log(`discard unsaved changes${description && ' before ' + description}`);
@@ -181,6 +174,11 @@ async function loadGameDataFromFile(p) {
   }
 }
 
+function reportError(err) {
+  console.error(err);
+  dialog.showErrorBox(err.name, err.stack);
+}
+
 exports.showPatchDialog = showPatchDialog;
 exports.showExportDialog = showExportDialog;
 exports.patchData = patchData;
@@ -191,3 +189,4 @@ exports.tryPatchAndExport = tryPatchAndExport;
 exports.ensureGameData = ensureGameData;
 exports.checkUnsavedThen = checkUnsavedThen;
 exports.loadGameDataFromFile = loadGameDataFromFile;
+exports.reportError = reportError;
