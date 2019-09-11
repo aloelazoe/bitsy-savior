@@ -15,12 +15,13 @@ there are shortcuts for each action (use `cmd` instead of `ctrl` if you are on m
 1. `ctrl+o`: load game data from file and remember this file as a saving path for when you make changes in the editor. it is advised that you use this command instead of `upload game` from the download panel or copy-pasting new bitsy data in game data panel. it works more reliably when importing from html and provides a safer way to switch between different bitsy games. there are two kinds of files you can open:
     * text files with bitsy data ending with `.txt` or `.bitsy`
     * html files with a bitsy game
-2. `ctrl+s`: patch game data in html file with a bitsy game without modifying anything else. you can add hacks to your html file, patch data, and hacks are still going to be there
-3. `ctrl+e`: save game data as a separate text file
-4. `ctrl+shift+s`: patch game data in html file, always opens a file-choosing dialog, like 'save as' option you would often see in other programs
-5. `ctrl+shift+e`: export game data, always show file-choosing dialog
-6. `ctrl+d`: patch and export at the same time
-7. `ctrl+r`: run bitsy game in browser - will attempt to open html file you are patching
+1. `ctrl+s`: patch game data in html file with a bitsy game without modifying anything else. you can add hacks to your html file, patch data, and hacks are still going to be there
+1. `ctrl+e`: save game data as a separate text file
+1. `ctrl+d`: patch and export at the same time
+1. `ctrl+shift+s`: patch game data in html file, always opens a file-choosing dialog, like 'save as' option you would often see in other programs
+1. `ctrl+shift+e`: export game data, always show file-choosing dialog
+1. `ctrl+alt+s`: save as new html. equivalent of 'download game' from the download panel in web version of bitsy, but also remembers where you are saving so that you can patch this file later
+1. `ctrl+r`: run bitsy game in browser - will attempt to open html file you are patching
 
 ## custom editor patch
 you can choose a javascript file to execute when bitsy-editor has finished loading
@@ -34,6 +35,6 @@ this is useful to tweak style and layout of the editor, for [example](https://gi
 ## how to run bitsy-savior from source
 you will need [git](https://git-scm.com/) and [node.js](https://nodejs.org/en/) to be installed
 1. `git clone --recurse-submodule https://github.com/aloelazoe/bitsy-savior.git`
-2. `cd bitsy-savior`
-3. `npm install`
-4. `npm start`
+1. `cd bitsy-savior`
+1. `npm install`
+1. `npm start`

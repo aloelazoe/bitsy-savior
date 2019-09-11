@@ -37,6 +37,11 @@ function injectBitsySavior() {
     ipcRenderer.send('reset-game-data', 'resetGameDataOrig');
   };
 
+  // replace ExporterUtils.DownloadFile
+  ExporterUtils.DownloadFile = function(fileName, fileData) {
+    ipcRenderer.send('save-file', fileName, fileData);
+  };
+
   window.tryLoadingGameData = function (data) {
     const oldData = document.getElementById("game_data").value;
     try {

@@ -118,6 +118,18 @@ const menuTemplate = [
         click: exportData,
       },
       {
+        label: 'Patch and export',
+        accelerator: 'CommandOrControl+D',
+        type: 'normal',
+        click: async function() {
+          const pp = paths.patch || await showPatchDialog();
+          const pe = paths.export || await showExportDialog();
+          tryPatchAndExport(pp, pe)
+            .then(console.log)
+            .catch(reportError);
+        },
+      },
+      {
         label: 'Patch game data in...',
         accelerator: 'CommandOrControl+Shift+S',
         type: 'normal',
@@ -130,16 +142,13 @@ const menuTemplate = [
         click: () => exportData(true),
       },
       {
-        label: 'Patch and export',
-        accelerator: 'CommandOrControl+D',
+        label: 'Save as new html...',
+        accelerator: 'CommandOrControl+Alt+S',
         type: 'normal',
-        click: async function() {
-          const pp = paths.patch || await showPatchDialog();
-          const pe = paths.export || await showExportDialog();
-          tryPatchAndExport(pp, pe)
-            .then(console.log)
+        click: () => {
+          global.bitsyWindow.webContents.executeJavaScript('window.exportGame()')
             .catch(reportError);
-        },
+        }
       },
       { type: 'separator' },
       {

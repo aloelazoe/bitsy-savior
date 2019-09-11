@@ -10,7 +10,9 @@ const paths = require('./src/paths');
 const {
   tryPatchAndExport,
   checkUnsavedThen,
-  reportError
+  reportError,
+  saveNewHtml,
+  exportData
 } = require('./src/utils');
 const menu = require('./src/menu');
 
@@ -54,6 +56,14 @@ function createWindow() {
       .catch(console.error);
   });
 }
+
+ipcMain.on('save-file', (event, fileName, fileData) => {
+  if (fileName.endsWith('.html')) {
+    saveNewHtml(fileData);
+  } else if (fileName.endsWith('.bitsy')) {
+    exportData(true);
+  }
+});
 
 ipcMain.on('reset-game-data', (event, bitsyCallbackName) => {
   console.log('reset-game-data was raised');

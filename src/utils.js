@@ -29,6 +29,27 @@ async function showExportDialog() {
   return p;
 }
 
+async function saveNewHtml(html) {
+  const { filePath: p } = await dialog.showSaveDialog({
+    buttonLabel: 'Save',
+    filters: [{
+      name: 'Html with a bitsy game',
+      extensions: ['html']
+    }]
+  });
+  if (!p) return;
+  console.log('saving new html to:', p);
+  try {
+    await fse.outputFile(p, html);
+  } catch (err) {
+    reportError(err);
+    return;
+  }
+  paths.markUnsaved({ patch: false });
+  paths.patch = p;
+  console.log('successfully saved as new html');
+}
+
 async function patchData(alwaysWithDialog = false) {
   let p = paths.patch;
   if (!p || alwaysWithDialog === true) p = await showPatchDialog();
@@ -181,6 +202,7 @@ function reportError(err) {
 
 exports.showPatchDialog = showPatchDialog;
 exports.showExportDialog = showExportDialog;
+exports.saveNewHtml = saveNewHtml;
 exports.patchData = patchData;
 exports.exportData = exportData;
 exports.tryPatch = tryPatch;
