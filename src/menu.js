@@ -29,7 +29,7 @@ if (isMac || isLinux) {
     // copyright: 'Copyright', // todo: add copyright when adam decides on bitsy license
     // version: 'electron build version', // will be set automatically on mac
     credits: 'Elkie Nova (@aloelazoe)',
-    website: 'https://github.com/aloelazoe/bitsy-savior', // todo: change to itchio page when i publish,
+    website: 'https://aloelazoe.itch.io/bitsy-savior',
     iconPath: aboutPanelImagePath
   });
 }
@@ -251,7 +251,7 @@ const menuTemplate = [
       {
         label: 'Website',
         click: async () => {
-          await shell.openExternal('https://github.com/aloelazoe/bitsy-savior');
+          await shell.openExternal('https://aloelazoe.itch.io/bitsy-savior');
         }
       },
       ...(!isMac ? [
