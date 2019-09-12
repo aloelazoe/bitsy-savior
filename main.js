@@ -12,15 +12,14 @@ const {
   checkUnsavedThen,
   reportError,
   saveNewHtml,
-  exportData
+  exportData,
+  loadGameDataFromFile
 } = require('./src/utils');
 const menu = require('./src/menu');
 
 global.autosave = false;
 
 function createWindow() {
-  paths.setFromStorage();
-
   const { screen } = require('electron');
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
   const win = global.bitsyWindow = new BrowserWindow({
@@ -34,6 +33,18 @@ function createWindow() {
   })
   win.loadFile('src/bitsy/editor/index.html');
   // win.webContents.openDevTools();
+
+  paths.setFromStorage();
+  let p = paths[paths.lastSavedAlone] || paths.export || paths.patch;
+  if (p) {
+    loadGameDataFromFile(p, false)
+      .then(() => console.log('loaded game data from:', p))
+      .catch((err) => {
+        paths.reset();
+        paths.saveToStorage();
+        reportError;
+      });
+  }
 
   win.on('page-title-updated', (e) => e.preventDefault());
   paths.updateTitle();
@@ -68,6 +79,7 @@ ipcMain.on('reset-game-data', (event, bitsyCallbackName) => {
   console.log('reset-game-data was raised');
   checkUnsavedThen(() => {
     paths.reset();
+    paths.lastSavedAlone = null;
     paths.saveToStorage();
     event.reply('call', bitsyCallbackName);
   }, 'resetting game data');

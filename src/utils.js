@@ -89,6 +89,7 @@ async function tryPatch(p, data) {
     throw new Error(`Couldn't patch ${p}\n${err}`);
   }
   paths.markUnsaved({ patch: false });
+  paths.lastSavedAlone = paths.unsavedChanges ? 'patch' : null;
   return 'patch successful';
 }
 
@@ -103,6 +104,7 @@ async function tryExport(p, data) {
     throw new Error(`Couldn't export ${p}\n${err}`);
   }
   paths.markUnsaved({ export: false });
+  paths.lastSavedAlone = paths.unsavedChanges ? 'export' : null;
   return 'export successful';
 }
 
@@ -111,6 +113,7 @@ async function tryPatchAndExport(pp, pe, data) {
   // make sure game data will be the same for both patching and exporting
   data = await ensureGameData(data);
   await Promise.all([tryPatch(pp, data), tryExport(pe, data)]);
+  if (pp && pe) paths.lastSavedAlone = null;
   paths.saveToStorage();
   return `${pp ? 'patch ' : ''}${(pp && pe)? '& ' : ''}${pe ? 'export ' : ''}successful`;
 }
@@ -158,7 +161,7 @@ function checkUnsavedThen(nextAction, description = '') {
     });
 }
 
-async function loadGameDataFromFile(p) {
+async function loadGameDataFromFile(p, reset = true) {
   const isHtml = (path.extname(p) === '.html');
   const fileContents = await fse.readFile(p, 'utf8');
   let data;
@@ -176,20 +179,26 @@ async function loadGameDataFromFile(p) {
   }
   // remember if autosaving was on and turn it off before trying to load new game data
   // this will ensure new game data won't be auto-saved to the current files
+  // also make sure paths are not unnecessarily marked as unsaved
+  // TODO: instead of this hacky fix only patch each individual bitsy editor function
+  // that directly modifies the data, instead of patching just refreshGameData
   const currentAutosaveSettings = global.autosave;
   global.autosave = false;
+  paths.saveToStorage();
   // attempt to load new game data. will resolve into an error message if something goes wrong
   // tryLoadingGameData will revert to a previous game data if it catches an error
   const errMessage = await global.bitsyWindow.webContents.executeJavaScript(
     `window.tryLoadingGameData(\`${data}\`)`
   );
   global.autosave = currentAutosaveSettings;
+  paths.setFromStorage();
   if (errMessage) {
     throw new Error(errMessage);
   }
   // if we are here, data was valid and was loaded successfully
   // reset paths and make them point to the newly opened file
-  paths.reset();
+  if (reset) paths.reset();
+  // TODO: refactor to just use a const pathLabel like paths[pathLabel]
   if (isHtml) {
     paths.patch = p;
     paths.markUnsaved({ patch: false });
@@ -197,6 +206,10 @@ async function loadGameDataFromFile(p) {
     paths.export = p;
     paths.markUnsaved({ export: false });
   }
+  // account for a case when both files were marked as unsaved before quitting,
+  // but contained identical data because they were saved at the same time before
+  // in this case they should both be marked as saved
+  if (!paths.lastSavedAlone) paths.markUnsaved({ patch: false, export: false});
   paths.saveToStorage();
 }
 

@@ -3,6 +3,7 @@ const storage = require('./storage');
 const paths = global.paths = {
   _patch: { value: null, unsaved: false },
   _export: { value: null, unsaved: false },
+  lastSavedAlone: null,
   editorPatch: null,
   get patch() {
     return this._patch.value;
@@ -29,12 +30,14 @@ const paths = global.paths = {
   reset: function() {
     this._patch = { value: null, unsaved: false };
     this._export = { value: null, unsaved: false };
+    this.lastSavedAlone = null;
     this.updateTitle();
   },
   saveToStorage: function() {
     storage.set('paths', {
       _patch: this._patch,
       _export: this._export,
+      lastSavedAlone: this.lastSavedAlone,
       editorPatch: this.editorPatch
     });
   },
