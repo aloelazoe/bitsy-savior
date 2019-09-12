@@ -10,9 +10,9 @@
     "build-windows": "electron-packager . --platform=win32  --arch=all --out=build/ --overwrite --icon=src/bitsy/editor/icons/bitsy.icns --ignore=\"src/bitsy/(?!editor)\" --ignore=\"test\" && echo \"built for windows\"",
     "build-linux": "electron-packager . --platform=linux  --arch=x64 --out=build/ --overwrite --icon=src/bitsy/editor/icons/bitsy.icns --ignore=\"src/bitsy/(?!editor)\" --ignore=\"test\" && echo \"built for linux\"",
     "build": "npm run clean && npm run build-mac && npm run build-linux && npm run build-windows && echo \"build successful\"",
-    "push_mac": "butler push ./build/bitsy-savior-darwin-x64/ aloelazoe/bitsy-savior:mac-64",
-    "push_linux": "butler push ./build/bitsy-savior-linux-x64/ aloelazoe/bitsy-savior:linux-64",
-    "push_win": "butler push ./build/bitsy-savior-win32-x64/ aloelazoe/bitsy-savior:windows-64 && butler push ./build/bitsy-savior-win32-ia32/ aloelazoe/bitsy-savior:windows-32",
+    "push_mac": "butler push ./build/bitsy-savior-darwin-x64/ aloelazoe/bitsy-savior:mac-64 --userversion-file build-version.txt",
+    "push_linux": "butler push ./build/bitsy-savior-linux-x64/ aloelazoe/bitsy-savior:linux-64 --userversion-file build-version.txt",
+    "push_win": "butler push ./build/bitsy-savior-win32-x64/ aloelazoe/bitsy-savior:windows-64 --userversion-file build-version.txt && butler push ./build/bitsy-savior-win32-ia32/ aloelazoe/bitsy-savior:windows-32 --userversion-file build-version.txt",
     "push": "npm run push_mac && npm run push_linux && npm run push_win && butler status aloelazoe/bitsy-savior",
     "publish": "npm run build && npm run push"
   },
