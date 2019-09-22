@@ -14,7 +14,8 @@
     "push_linux": "butler push ./build/bitsy-savior-linux-x64/ aloelazoe/bitsy-savior:linux-64 --userversion-file build-version.txt",
     "push_win": "butler push ./build/bitsy-savior-win32-x64/ aloelazoe/bitsy-savior:windows-64 --userversion-file build-version.txt && butler push ./build/bitsy-savior-win32-ia32/ aloelazoe/bitsy-savior:windows-32 --userversion-file build-version.txt",
     "push": "npm run push_mac && npm run push_linux && npm run push_win && butler status aloelazoe/bitsy-savior",
-    "publish": "npm run build && npm run push"
+    "publish": "npm run build && npm run push",
+    "version": "node ./scripts/version.js && git add build-version.txt"
   },
   "repository": {
     "type": "git",
