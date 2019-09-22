@@ -1,6 +1,6 @@
 {
   "name": "bitsy-savior",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "bitsy editor by Adam Le Doux put in a desktop app. can update game data in exported html files on your disk. super useful when you work with bitsy-hacks",
   "main": "main.js",
   "scripts": {
