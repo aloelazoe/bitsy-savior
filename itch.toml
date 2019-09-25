@@ -1,0 +1,4 @@
+[[actions]]
+name = "Default"
+path = "bitsy-savior{{EXT}}"
+args = ["itchApp"]

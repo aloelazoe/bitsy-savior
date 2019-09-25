@@ -16,6 +16,7 @@ const {
   loadGameDataFromFile
 } = require('./src/utils');
 const menu = require('./src/menu');
+const { checkUpdates } = require('./src/check-updates');
 
 global.autosave = false;
 
@@ -98,4 +99,7 @@ ipcMain.on('autosave', () => {
     .catch(reportError);
 });
 
-app.on('ready', createWindow);
+app.on('ready', () => {
+  createWindow();
+  checkUpdates();
+});
