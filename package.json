@@ -29,6 +29,6 @@
   "dependencies": {
     "fs-extra": "^8.1.0",
     "compare-versions": "^3.5.1",
-    "node-fetch": "^2.6.0"
+    "node-fetch": "^2.6.1"
   }
 }
