@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>bitsy-savior</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <style>
+        .row {
+            display: flex;
+        }
+
+        .column {
+            flex: 50%;
+        }
+    </style>
+    <script src='js/launcher.js'></script>
+</head>
+<body>
+    <div>
+        <fieldset>
+            <label>bitsy-savior title and info</label>
+        </fieldset>
+    </div>
+    <div class="row">
+        <div class="column">
+            <div>
+                <fieldset id="editorInfo">
+                    info about currently selected editor
+                </fieldset>
+            </div>
+        </div>
+        <div class="column">
+            <form id="editorListForm">
+                <fieldset id="editorList">
+                    <!-- <input type="radio" id="editorX" name="editor">
+                    <label for="editorX">Bitsy</label><br> -->
+                </fieldset>
+            </form>
+            <!-- <fieldset>
+                <button id="addEditorButton">add another bitsy editor</button>
+            </fieldset> -->
+            <fieldset>
+                <button onclick="onRunEditor(event);">run</button>
+            </fieldset>
+        </div>
+    </div>
+</body>
+</html>

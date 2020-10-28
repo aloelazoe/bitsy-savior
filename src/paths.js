@@ -34,15 +34,19 @@ const paths = global.paths = {
         this.updateTitle();
     },
     saveToStorage: function () {
-        storage.set('paths', {
+        global.storedData.editors[global.storedData.editorIndex].paths = this.serialize();
+        storage.save(global.storedData);
+    },
+    serialize: function (params) {
+        return {
             _patch: this._patch,
             _export: this._export,
             lastSavedAlone: this.lastSavedAlone,
             editorPatch: this.editorPatch
-        });
+        }
     },
     setFromStorage: function () {
-        const storedPaths = storage.get('paths');
+        const storedPaths = global.storedData.editors[global.storedData.editorIndex].paths;
         if (!storedPaths) return;
         Object.assign(this, storedPaths);
         this.updateTitle();

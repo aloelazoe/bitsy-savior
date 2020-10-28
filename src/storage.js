@@ -6,7 +6,8 @@ const {
 
 const storage = {
     _path: path.join(app.getPath('userData'), 'storage.json'),
-    _getStorageObj: function () {
+    // todo: maybe just make it an interface to serialize global.storedData?
+    read: function () {
         try {
             const storageObj = fse.readJsonSync(this._path);
             return storageObj;
@@ -15,15 +16,9 @@ const storage = {
             return {};
         }
     },
-    get: function (name) {
-        const storageObj = this._getStorageObj();
-        return storageObj[name];
-    },
-    set: function (name, value) {
-        const storageObj = this._getStorageObj();
-        storageObj[name] = value;
-        fse.outputJsonSync(this._path, storageObj);
-    },
+    save: function(data) {
+        fse.outputJsonSync(this._path, data, {spaces: 4});
+    }
 }
 
 module.exports = storage;

@@ -7,6 +7,7 @@ const {
     shell
 } = require('electron');
 const paths = require('./paths');
+const storage = require('./storage');
 const {
     tryPatchAndExport,
     checkUnsavedThen,
@@ -20,9 +21,45 @@ const { checkUpdates } = require('./check-updates');
 
 global.autosave = false;
 
-function createWindow() {
+function createLauncherWindow() {
+    if (global.launcherWindow && !global.launcherWindow.isDestroyed()) {
+        launcherWindow.show();
+        return;
+    }
+
+    const win = global.launcherWindow = new BrowserWindow({
+        width: 512,
+        height: 512,
+        fullscreenWindowTitle: true,
+        webPreferences: {
+            nodeIntegration: true
+        }
+    })
+
+    win.loadFile('src/launcher/index.html');
+}
+
+ipcMain.on('runEditor', () => {
+    createEditorWindow();
+    if (global.launcherWindow && !global.launcherWindow.isDestroyed()) {
+        launcherWindow.destroy();
+    }
+});
+
+ipcMain.on('saveData', () => {
+    storage.save(global.storedData);
+});
+
+function createEditorWindow() {
     const { screen } = require('electron');
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+
+    if (global.bitsyWindow && !global.bitsyWindow.isDestroyed()) {
+        console.log('bitsy editor is already running!');
+        global.bitsyWindow.show();
+        return;
+    }
+
     const win = global.bitsyWindow = new BrowserWindow({
         width: width,
         height: height,
@@ -32,7 +69,17 @@ function createWindow() {
             preload: require.resolve('./injector')
         }
     })
-    win.loadFile('src/bitsy/editor/index.html');
+
+    let editorPath;
+
+    const currentEditor = global.storedData.editors[global.storedData.editorIndex];
+    if (currentEditor.type === 'builtinVanilla') {
+        editorPath = 'src/bitsy/editor/index.html';
+    } else {
+        editorPath = currentEditor.editorPath;
+    }
+
+    win.loadFile(editorPath);
     // win.webContents.openDevTools();
 
     paths.setFromStorage();
@@ -56,6 +103,7 @@ function createWindow() {
     win.on('close', function (event) {
         event.preventDefault();
         checkUnsavedThen(() => {
+            createLauncherWindow();
             win.destroy();
         }, 'closing bitsy-savior');
     });
@@ -100,6 +148,32 @@ ipcMain.on('autosave', () => {
 });
 
 app.on('ready', () => {
-    createWindow();
+    // load stored data about the editors
+    let storedData = storage.read();
+    console.log(storedData);
+
+    // if data doesn't include editor list because it's from the older version,
+    // convert it and write it to the file first
+    if (!storedData.hasOwnProperty('editors') || !storedData.hasOwnProperty('editorIndex')) {
+        const storedPaths = storedData.paths;
+        if (storedPaths) Object.assign(paths, storedPaths);
+        storedData = {
+            editors: [
+                {
+                    name: 'bitsy',
+                    description: 'vanilla bitsy that came packaged with bitsy-savior',
+                    type: 'builtinVanilla',
+                    paths: paths.serialize(),
+                }
+            ],
+            editorIndex: 0
+        }
+        storage.save(storedData);
+    }
+
+    global.storedData = storedData;
+
+    createLauncherWindow();
+
     checkUpdates();
 });
