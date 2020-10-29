@@ -13,36 +13,59 @@
         .column {
             flex: 50%;
         }
+        .withBorder {
+            border: 1px solid black;
+            padding: 5px;
+            margin: 2px;
+        }
+        .header {
+            font-size: x-large;
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
     </style>
     <script src='js/launcher.js'></script>
 </head>
 <body>
-    <div>
-        <fieldset>
-            <label>bitsy-savior title and info</label>
-        </fieldset>
+    <div class="withBorder header">
+        <label>bitsy-savior title and info</label>
     </div>
     <div class="row">
         <div class="column">
-            <div>
-                <fieldset id="editorInfo">
-                    info about currently selected editor
-                </fieldset>
+            <form id="editorList" class="withBorder">
+                <!-- <input type="radio" id="editorX" name="editor">
+                <label for="editorX">Bitsy</label><br> -->
+            </form>
+            <div class="withBorder">
+                <button onclick="onRunEditor(event);">run</button>
+                <button id="addEditorButton" onclick="onAddEditorShow(event);">add</button>
+                <button id="setUpEditorButton" onclick="onSetUpEditor(event);">set up</button>
+                <button id="deleteEditorButton" onclick="onDeleteEditor(event);">delete</button>
             </div>
         </div>
         <div class="column">
-            <form id="editorListForm">
-                <fieldset id="editorList">
-                    <!-- <input type="radio" id="editorX" name="editor">
-                    <label for="editorX">Bitsy</label><br> -->
-                </fieldset>
-            </form>
-            <!-- <fieldset>
-                <button id="addEditorButton">add another bitsy editor</button>
-            </fieldset> -->
-            <fieldset>
-                <button onclick="onRunEditor(event);">run</button>
-            </fieldset>
+            <div id="editorInfo" class="withBorder">
+                <div class="infoEditable">adding new editor to the list</div>
+
+                <div id="editorName" class="infoDisplayed"></div>
+                <div class="infoEditable">name: <input id="editorNameInput"></input></div>
+
+                <div>
+                    <span class="infoEditable" id="editorTypeLabel">type: </span>
+                    <span id="editorType"></span>
+                </div>
+
+                <div id="editorDescription" class="infoDisplayed"></div>
+                <div class="infoEditable">description: <input id="editorDescriptionInput"></input></div>
+
+                <div id="editorPath" class="infoDisplayed"></div>
+                <div class="infoEditable">location: <input id="editorPathInput" type="file"></input></div>
+                
+                <div class="infoEditable">
+                    <button id="confirmEditorButton" onclick="onConfirmEditor(event);">confirm</button>
+                    <button id="cancelEditorButton" onclick="onCancelEditor(event);">cancel</button>
+                </div>
+            </div>
         </div>
     </div>
 </body>
