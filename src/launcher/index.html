@@ -6,64 +6,125 @@
     <title>bitsy-savior</title>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
     <style>
+        @font-face {
+            font-family: "Nunito";
+            src: url("font/Nunito-Regular.ttf");
+        }
+
+        body {
+            font-family: "Nunito", Helvetica, Arial, sans-serif;
+            background-color: lavenderblush;
+        }
+        button {
+            font-family: sans-serif;
+            text-align: center;
+        }
+        .bigText {
+            font-size: 24px;
+        }
+        .mediumText {
+            font-size: 16px;
+        }
+        .smallText {
+            font-size: 12px;
+            font-style: italic;
+        }
+        .editorInfoItem {
+            margin-bottom: 5px;
+        }
+        #buttons {
+            margin-top: 5px;
+            padding-left: 5px;
+        }
+        #editorDescriptionInput {
+            padding: 0px;
+            width: 99%;
+            height: 55px;
+        }
         .row {
             display: flex;
         }
-
         .column {
             flex: 50%;
+            height: min-content;
         }
         .withBorder {
             border: 1px solid black;
-            padding: 5px;
-            margin: 2px;
-        }
-        .header {
-            font-size: x-large;
+            padding: 10px;
             padding-top: 10px;
             padding-bottom: 10px;
+            margin: 5px;
+            border-radius: 10px;
+        }
+        .header {
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+        #editorInfo {
+            padding-bottom: 5px;
+        }
+        input[type="radio"] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            display: none;
+        }
+        input[type="radio"]:checked + label {
+            background-color: lightpink;
+        }
+        .editorListLabel:hover {
+            background-color: rgb(255,211,214);
+        }
+        .editorListLabel {
+            display: block;
+            padding-left: 5px;
+        }
+        .credits {
+            text-align: center;
+        }
+        .title {
+            font-size: 36px;
+            text-align: center;
         }
     </style>
     <script src='js/launcher.js'></script>
 </head>
 <body>
     <div class="withBorder header">
-        <label>bitsy-savior title and info</label>
+        <div class="title">✨bitsy-savior✨</div>
+        <div class="smallText credits">by aloelazoe</div>
     </div>
     <div class="row">
-        <div class="column">
-            <form id="editorList" class="withBorder">
+        <div class="column withBorder">
+            <form id="editorList">
                 <!-- <input type="radio" id="editorX" name="editor">
                 <label for="editorX">Bitsy</label><br> -->
             </form>
-            <div class="withBorder">
-                <button onclick="onRunEditor(event);">run</button>
-                <button id="addEditorButton" onclick="onAddEditorShow(event);">add</button>
-                <button id="setUpEditorButton" onclick="onSetUpEditor(event);">set up</button>
-                <button id="deleteEditorButton" onclick="onDeleteEditor(event);">delete</button>
+            <div id="buttons" class="bigText">
+                <button onclick="onRunEditor(event);">▶️</button>
+                <button id="addEditorButton" onclick="onAddEditorShow(event);">➕</button>
+                <button id="setUpEditorButton" onclick="onSetUpEditor(event);">✏️</button>
+                <button id="deleteEditorButton" onclick="onDeleteEditor(event);">✖️</button>
             </div>
         </div>
         <div class="column">
             <div id="editorInfo" class="withBorder">
-                <div class="infoEditable">adding new editor to the list</div>
+                <div class="infoEditable editorInfoItem bigText">new editor</div>
 
-                <div id="editorName" class="infoDisplayed"></div>
-                <div class="infoEditable">name: <input id="editorNameInput"></input></div>
+                <div id="editorName" class="infoDisplayed bigText editorInfoItem"></div>
+                <div class="infoEditable editorInfoItem mediumText">name: <input id="editorNameInput"></input></div>
 
-                <div>
-                    <span class="infoEditable" id="editorTypeLabel">type: </span>
-                    <span id="editorType"></span>
-                </div>
+                <div class="infoEditable editorInfoItem mediumText">location: <button id="editorPathInput">🔎</button></div>
+                <div id="editorPath" class="smallText infoEditable editorInfoItem"></div>
 
-                <div id="editorDescription" class="infoDisplayed"></div>
-                <div class="infoEditable">description: <input id="editorDescriptionInput"></input></div>
+                <div id="editorType"  class="smallText editorInfoItem infoDisplayed"></div>
 
-                <div id="editorPath" class="infoDisplayed"></div>
-                <div class="infoEditable">location: <input id="editorPathInput" type="file"></input></div>
+                <div id="editorDescription" class="infoDisplayed editorInfoItem mediumText"></div>
+                <div class="infoEditable editorInfoItem mediumText">description: <br> <textarea id="editorDescriptionInput"></textarea></div>
                 
-                <div class="infoEditable">
-                    <button id="confirmEditorButton" onclick="onConfirmEditor(event);">confirm</button>
-                    <button id="cancelEditorButton" onclick="onCancelEditor(event);">cancel</button>
+                <div class="infoEditable editorInfoItem">
+                    <button id="confirmEditorButton" onclick="onConfirmEditor(event);">👍</button>
+                    <button id="cancelEditorButton" onclick="onCancelEditor(event);">✖️</button>
                 </div>
             </div>
         </div>

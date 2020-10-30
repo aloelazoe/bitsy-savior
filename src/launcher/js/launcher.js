@@ -14,10 +14,12 @@ let editorPathEl;
 
 let editorNameInputEl;
 let editorDescriptionInputEl;
-let editorPathInputEl;
+let editorPathButtonEl;
 
 let setUpEditorButtonEl;
 let deleteEditorButtonEl;
+
+let buttonsEl;
 
 let infoDisplayedEls;
 let infoEditableEls;
@@ -34,9 +36,11 @@ function init() {
     setUpEditorButtonEl = document.getElementById('setUpEditorButton');
     deleteEditorButtonEl = document.getElementById('deleteEditorButton');
 
-    editorNameInputEl = document.getElementById('editorNameInput');;
-    editorDescriptionInputEl = document.getElementById('editorDescriptionInput');;
-    editorPathInputEl = document.getElementById('editorPathInput');;
+    editorNameInputEl = document.getElementById('editorNameInput');
+    editorDescriptionInputEl = document.getElementById('editorDescriptionInput');
+    editorPathButtonEl = document.getElementById('editorPathButton');
+
+    buttonsEl = document.getElementById('buttons');
 
     infoDisplayedEls = Array.prototype.slice.call(document.getElementsByClassName('infoDisplayed'));
     infoEditableEls = Array.prototype.slice.call(document.getElementsByClassName('infoEditable'));
@@ -65,10 +69,10 @@ function updateEditorList() {
         const labelEl = document.createElement('label');
         labelEl.htmlFor = id;
         labelEl.innerText = editor.name;
+        labelEl.className = 'editorListLabel bigText';
 
         editorListEl.appendChild(inputEl);
         editorListEl.appendChild(labelEl);
-        editorListEl.appendChild(document.createElement('br'));
     });
 }
 
@@ -84,13 +88,16 @@ function checkSelectedEditor() {
 function onAddEditorShow(event) {
     isAddingEditor = true;
 
-    // todo: uncheck all editors in the list, but don't change editorIndex in data yet
+    // uncheck all editors in the list, but don't change editorIndex in data yet
     const editorListControls = editorListEl.elements;
     for (let index = 0; index < editorListControls.length; index++) {
         editorListControls[index].checked = false;
     }
 
-    // todo: reset editable fields in editor info panel
+    // hide buttons
+    buttonsEl.style.display = 'none';
+
+    // reset editable fields in editor info panel
     clearInputs();
 
     // for now it can only be local
@@ -101,16 +108,22 @@ function onAddEditorShow(event) {
 }
 
 function onConfirmEditor(event) {
-    // todo
-    isAddingEditor = false;
-    setInfoEditable(false);
-    checkSelectedEditor();
+    // todo: check if all fields are valid and add editor data
+    // todo: change editor index so that new editor is selected
+    // todo: update editor list
+    exitEditing();
 }
 
 function onCancelEditor(event) {
+    exitEditing();
+}
+
+function exitEditing() {
     isAddingEditor = false;
     setInfoEditable(false);
     checkSelectedEditor();
+    updateDisplayedInfo();
+    buttonsEl.style.display = 'block';
 }
 
 function onSetUpEditor(event) {
@@ -140,14 +153,11 @@ function updateDisplayedInfo() {
     editorTypeEl.innerText = curEditor.type.replace(/([A-Z]+)/g, " $1").replace(/([A-Z][a-z])/g, " $1").toLowerCase();
     editorDescriptionEl.innerText = curEditor.description;
     if (curEditor.type === 'builtinVanilla') {
-        editorPathEl.style.display = "none";
         setUpEditorButtonEl.style.display = "none";
         deleteEditorButtonEl.style.display = "none";
     } else {
-        editorPathEl.style.display = "block";
         setUpEditorButtonEl.style.display = "inline";
         deleteEditorButtonEl.style.display = "inline";
-        editorPathEl.innerText = curEditor.editorPath;
     }
 }
 
@@ -156,13 +166,13 @@ function updateInputs() {
     
     editorNameInputEl.value = curEditor.name;
     editorDescriptionInputEl.value = curEditor.description;
-    editorPathInputEl.value = curEditor.editorPath;
+    editorPathEl.innerText = curEditor.editorPath;
 }
 
 function clearInputs() {
     editorNameInputEl.value = '';
     editorDescriptionInputEl.value = '';
-    editorPathInputEl.value = '';
+    editorPathEl.innerText = '';
 }
 
 function setInfoEditable(bool) {
