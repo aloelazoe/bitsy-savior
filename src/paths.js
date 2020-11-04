@@ -45,6 +45,14 @@ const paths = global.paths = {
             editorPatch: this.editorPatch
         }
     },
+    serializeEmpty (){
+        return {
+            _patch: { value: null, unsaved: false },
+            _export: { value: null, unsaved: false },
+            lastSavedAlone: null,
+            editorPatch: null
+        }
+    },
     setFromStorage: function () {
         const storedPaths = global.storedData.editors[global.storedData.editorIndex].paths;
         if (!storedPaths) return;

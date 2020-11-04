@@ -21,6 +21,48 @@ const { checkUpdates } = require('./check-updates');
 
 global.autosave = false;
 
+app.on('ready', () => {
+    // load stored data about the editors
+    let storedData = storage.read();
+    console.log(storedData);
+
+    // if data doesn't include editor list because it's from the older version,
+    // convert it and write it to the file first
+    if (!storedData.hasOwnProperty('editors') || !storedData.hasOwnProperty('editorIndex')) {
+        const storedPaths = storedData.paths;
+        if (storedPaths) Object.assign(paths, storedPaths);
+        storedData = {
+            editors: [
+                {
+                    name: 'bitsy',
+                    description: 'vanilla bitsy that came packaged with bitsy-savior',
+                    type: 'builtinVanilla',
+                    paths: paths.serialize(),
+                }
+            ],
+            editorIndex: 0
+        }
+        storage.save(storedData);
+    }
+
+    global.storedData = storedData;
+    global.newEditor = makeNewEditor();
+
+    createLauncherWindow();
+
+    checkUpdates();
+});
+
+function makeNewEditor() {
+    return {
+        name: '',
+        description: '',
+        type: 'local',
+        editorPath: '',
+        paths: paths.serializeEmpty(),
+    };
+}
+
 function createLauncherWindow() {
     if (global.launcherWindow && !global.launcherWindow.isDestroyed()) {
         launcherWindow.show();
@@ -38,6 +80,46 @@ function createLauncherWindow() {
 
     win.loadFile('src/launcher/index.html');
 }
+
+ipcMain.on('resetNewEditor', (event) => {
+    global.newEditor = makeNewEditor();
+    event.reply('resetNewEditorReply');
+});
+
+ipcMain.on('setEditorPath', (event, arg) => {
+    dialog.showOpenDialog({
+        buttonLabel: 'Select',
+        filters: [{
+            name: 'Html with a bitsy editor',
+            extensions: ['html']
+        }]
+    })
+    .then((result) => {
+        // const { filePaths: [p] } = result;
+        // console.log('result:');
+        // console.log(result);
+        if (result.canceled || result.filePaths.length === 0) return;
+        const newPath = result.filePaths[0];
+        switch (arg) {
+            case 'current':
+                const curEditor = global.storedData.editors[global.storedData.editorIndex];
+                // console.log(curEditor);
+                console.log(`setting the path of the current editor ${curEditor.name} to ${newPath}`);
+                curEditor.editorPath = newPath;
+                break;
+            
+            case 'new':
+                // console.log(global.newEditor);
+                console.log(`setting the path of the new editor ${global.newEditor.name} to ${newPath}`);
+                global.newEditor.editorPath = newPath;
+                break;
+        
+            default:
+                break;
+        }
+        event.reply('setEditorPathReply');
+    })
+});
 
 ipcMain.on('runEditor', () => {
     createEditorWindow();
@@ -145,35 +227,4 @@ ipcMain.on('autosave', () => {
     tryPatchAndExport(paths.patch, paths.export)
         .then(console.log)
         .catch(reportError);
-});
-
-app.on('ready', () => {
-    // load stored data about the editors
-    let storedData = storage.read();
-    console.log(storedData);
-
-    // if data doesn't include editor list because it's from the older version,
-    // convert it and write it to the file first
-    if (!storedData.hasOwnProperty('editors') || !storedData.hasOwnProperty('editorIndex')) {
-        const storedPaths = storedData.paths;
-        if (storedPaths) Object.assign(paths, storedPaths);
-        storedData = {
-            editors: [
-                {
-                    name: 'bitsy',
-                    description: 'vanilla bitsy that came packaged with bitsy-savior',
-                    type: 'builtinVanilla',
-                    paths: paths.serialize(),
-                }
-            ],
-            editorIndex: 0
-        }
-        storage.save(storedData);
-    }
-
-    global.storedData = storedData;
-
-    createLauncherWindow();
-
-    checkUpdates();
 });

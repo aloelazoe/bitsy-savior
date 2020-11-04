@@ -3,7 +3,7 @@ const {
     ipcRenderer
 } = require('electron');
 
-let isAddingEditor = false;
+let isAddingNewEditor = false;
 
 let editorListEl;
 
@@ -15,6 +15,8 @@ let editorPathEl;
 let editorNameInputEl;
 let editorDescriptionInputEl;
 let editorPathButtonEl;
+let newEditorWarningEl;
+let locationTipEl;
 
 let setUpEditorButtonEl;
 let deleteEditorButtonEl;
@@ -25,6 +27,7 @@ let infoDisplayedEls;
 let infoEditableEls;
 
 let storedData;
+let newEditor;
 
 function init() {
     editorListEl = document.getElementById('editorList');
@@ -39,6 +42,11 @@ function init() {
     editorNameInputEl = document.getElementById('editorNameInput');
     editorDescriptionInputEl = document.getElementById('editorDescriptionInput');
     editorPathButtonEl = document.getElementById('editorPathButton');
+    
+    newEditorWarningEl = document.getElementById('newEditorWarning');
+    newEditorWarningEl.style.display = 'none';
+    locationTipEl = document.getElementById('locationTip');
+    locationTipEl.style.display = 'none';
 
     buttonsEl = document.getElementById('buttons');
 
@@ -46,11 +54,16 @@ function init() {
     infoEditableEls = Array.prototype.slice.call(document.getElementsByClassName('infoEditable'));
 
     storedData = remote.getGlobal('storedData');
+    newEditor = remote.getGlobal('newEditor');
 
     updateEditorList();
     checkSelectedEditor();
     setInfoEditable(false);
     updateDisplayedInfo();
+}
+
+function getCurEditor() {
+    return isAddingNewEditor? newEditor: storedData.editors[storedData.editorIndex];
 }
 
 function updateEditorList() {
@@ -86,7 +99,7 @@ function checkSelectedEditor() {
 }
 
 function onAddEditorShow(event) {
-    isAddingEditor = true;
+    isAddingNewEditor = true;
 
     // uncheck all editors in the list, but don't change editorIndex in data yet
     const editorListControls = editorListEl.elements;
@@ -109,8 +122,33 @@ function onAddEditorShow(event) {
 
 function onConfirmEditor(event) {
     // todo: check if all fields are valid and add editor data
-    // todo: change editor index so that new editor is selected
     // todo: update editor list
+    // todo: change editor index so that new editor is selected
+    const curEditor = getCurEditor();
+    const newName = editorNameInputEl.value;
+    console.log('newName ' + newName);
+    // console.log('path ' + curEditor.editorPath);
+    if (newName.length < 1 || (!curEditor.editorPath || curEditor.editorPath.length < 1)) {
+        // show warning
+        newEditorWarningEl.style.display = 'block';
+        return;
+    }
+
+    curEditor.name = newName;
+    curEditor.description = editorDescriptionInputEl.value;
+    // editor path is already set
+
+    if (isAddingNewEditor) {
+        // just pushing into storedData.editors doesn't work for some reason..
+        const updatedEditors = [...storedData.editors, curEditor];
+        storedData.editors = updatedEditors;
+        console.log(curEditor);
+        console.log(storedData.editors);
+        storedData.editorIndex = storedData.editors.length - 1;
+    }
+
+    ipcRenderer.send('saveData');
+
     exitEditing();
 }
 
@@ -119,7 +157,9 @@ function onCancelEditor(event) {
 }
 
 function exitEditing() {
-    isAddingEditor = false;
+    ipcRenderer.send('resetNewEditor');
+    updateEditorList();
+    isAddingNewEditor = false;
     setInfoEditable(false);
     checkSelectedEditor();
     updateDisplayedInfo();
@@ -127,11 +167,44 @@ function exitEditing() {
 }
 
 function onSetUpEditor(event) {
-    // todo
+    // hide buttons
+    buttonsEl.style.display = 'none';
+
+    // update editable fields in editor info panel
+    updateInputs();
+
+    // show editable fields in editor info panel
+    setInfoEditable(true);
+}
+
+ipcRenderer.on('resetNewEditorReply', (event, arg) => {
+    newEditor = remote.getGlobal('newEditor');
+})
+
+ipcRenderer.on('setEditorPathReply', (event, arg) => {
+    // update path display
+    editorPathEl.innerText = getCurEditor().editorPath;
+})
+
+function onSetEditorPath(event) {
+    const kind = isAddingNewEditor? 'new': 'current';
+    ipcRenderer.send('setEditorPath', kind);
 }
 
 function onDeleteEditor(event) {
-    // todo
+    if (!window.confirm(`are you sure you want to delete ${getCurEditor().name} from the list? this will not delete any files, and you will be able to add it again, if you want`)) {
+        return;
+    }
+    // just changing storedData.editors directly doesn't work for some reason..
+    const updatedEditors = [...storedData.editors];
+    updatedEditors.splice(storedData.editorIndex, 1);
+    storedData.editors = updatedEditors;
+    storedData.editorIndex = Math.max(storedData.editorIndex - 1, 0);
+    ipcRenderer.send('saveData');
+    updateEditorList();
+    checkSelectedEditor();
+    setInfoEditable(false);
+    updateDisplayedInfo();
 }
 
 function onSwitchEditor(event) {
@@ -144,11 +217,13 @@ function onSwitchEditor(event) {
     // update ui
     updateDisplayedInfo();
 
-    if (isAddingEditor) onCancelEditor(event);
+    // if (isAddingNewEditor) {
+        onCancelEditor(event);
+    // }
 }
 
 function updateDisplayedInfo() {
-    const curEditor =  storedData.editors[storedData.editorIndex];
+    const curEditor = getCurEditor();
     editorNameEl.innerText = curEditor.name;
     editorTypeEl.innerText = curEditor.type.replace(/([A-Z]+)/g, " $1").replace(/([A-Z][a-z])/g, " $1").toLowerCase();
     editorDescriptionEl.innerText = curEditor.description;
@@ -162,7 +237,7 @@ function updateDisplayedInfo() {
 }
 
 function updateInputs() {
-    const curEditor =  storedData.editors[storedData.editorIndex];
+    const curEditor = getCurEditor();
     
     editorNameInputEl.value = curEditor.name;
     editorDescriptionInputEl.value = curEditor.description;
@@ -175,6 +250,11 @@ function clearInputs() {
     editorPathEl.innerText = '';
 }
 
+function onToggleEditorTip(event) {
+    const newDisplay = locationTipEl.style.display === 'none'? 'block': 'none';
+    locationTipEl.style.display = newDisplay;
+}
+
 function setInfoEditable(bool) {
     infoEditableEls.forEach(el => {
         const on = el.tagName === 'SPAN'? 'inline': 'block';
@@ -183,6 +263,8 @@ function setInfoEditable(bool) {
     infoDisplayedEls.forEach(el => {
         const on = el.tagName === 'SPAN'? 'inline': 'block';
         el.style.display = bool? 'none': on;
+        newEditorWarningEl.style.display = 'none';
+        locationTipEl.style.display = 'none';
     });
 }
 
