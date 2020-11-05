@@ -20,6 +20,43 @@ function injectBitsySavior() {
     }
 
     console.log('injecting bitsy savior');
+    
+    // * getFullGameData - save game data from the editor
+    // * on_game_data_change - load game data into the editor
+    // * refreshGameData - track unsaved changes
+    // * resetGameData - ask about unsaved changes before resetting data and file paths
+    // * ExporterUtils.DownloadFile - save to the file on disk directly and remember the saving path,
+    //   instead of going through dowload file menu
+
+
+    // check for bitsy functions that need to be patched or used
+    ['getFullGameData', 'on_game_data_change', 'refreshGameData', 'resetGameData', 'ExporterUtils.DownloadFile'].forEach(funcName => {
+        const funcNameArray = funcName.split('.');
+        let parent = window;
+        let object = undefined;
+        for (let index = 0; index < funcNameArray.length; index++) {
+            object = parent[funcNameArray[index]];
+            parent = object;
+        }
+
+        if (object) {
+            console.log(`✅ bitsy-savior found ${funcName} function`);
+        } else {
+            console.error(`❌ bitsy-savior couldn't find ${funcName} function. saving and opening files won't work properly`);
+        }
+    });
+
+    // * "game_data" element - load game data into the editor
+
+    // check for html elements that need to be interacted with
+    const dataTextArea = document.getElementById("game_data");
+    if (!dataTextArea) {
+        const errMessage = `❌ there is no element with "game_data" id in this editor. bitsy-savior won't be able to load game data`;
+        console.error(errMessage);
+    } else {
+        console.log(`✅ bitsy-savior found an element with "game_data" id`)
+    }
+
     // patch refreshGameData
     const refreshGameDataOrig = window.refreshGameData;
     window.refreshGameData = function () {
