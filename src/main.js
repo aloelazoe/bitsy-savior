@@ -6,7 +6,6 @@ const {
     ipcMain,
     shell
 } = require('electron');
-const paths = require('./paths');
 const storage = require('./storage');
 const {
     tryPatchAndExport,
@@ -18,6 +17,26 @@ const {
 } = require('./utils');
 const menu = require('./menu');
 const { checkUpdates } = require('./check-updates');
+
+const paths = require('./paths');
+paths.onPatchChanged = function () {
+    // enable or disable 'run game' menu item depending on
+    // whether there is an html file for patching that can be run
+
+    // console.log('onPatchChanged has been called');
+    
+    let runItem;
+    try {
+        runItem = Menu.getApplicationMenu().items.find(item => item.label === 'File')
+            .submenu.items.find(item => item.label === 'Run bitsy game in browser');
+    } catch (err) {
+        console.error(err);
+    }
+
+    if (runItem) {
+        runItem.enabled = Boolean(this.patch);
+    }
+}
 
 global.autosave = false;
 
@@ -166,6 +185,9 @@ function createEditorWindow() {
     win.loadFile(editorPath);
     // win.webContents.openDevTools();
 
+    // set menu before loading paths
+    Menu.setApplicationMenu(menu);
+
     paths.setFromStorage();
     let p = paths[paths.lastSavedAlone] || paths.export || paths.patch;
     if (p) {
@@ -180,8 +202,6 @@ function createEditorWindow() {
 
     win.on('page-title-updated', (e) => e.preventDefault());
     paths.updateTitle();
-
-    Menu.setApplicationMenu(menu);
 
     // ask before closing when you have unsaved changes
     win.on('close', function (event) {
@@ -200,12 +220,33 @@ function createEditorWindow() {
     });
 }
 
+ipcMain.on('feature-status', (event, featureStatus) => {
+    console.log('recieved feature status');
+    console.log(featureStatus);
+
+    // enable and disable menu items according to available features
+    const fileItems = Menu.getApplicationMenu().items.find(item => item.label === 'File').submenu.items;
+    fileItems.forEach(item => {
+        if (item.label === 'Open') {
+            item.enabled = Boolean(featureStatus['open files in editor']);
+        } else if (['Patch game data', 'Export game data', 'Patch and export', 'Patch game data in...', 'Export game data to...'].indexOf(item.label) !== -1) {
+            item.enabled = Boolean(featureStatus['save data to files']);
+        } else if (item.label === 'Save as new html...') {
+            item.enabled = Boolean(featureStatus['save as new html']);
+        }
+    });
+});
+
 ipcMain.on('save-file', (event, fileName, fileData) => {
     if (fileName.endsWith('.html')) {
         saveNewHtml(fileData);
     } else if (fileName.endsWith('.bitsy')) {
         exportData(true);
     }
+});
+
+ipcMain.on('mark-unsaved', () => {
+    paths.markUnsaved();
 });
 
 ipcMain.on('reset-game-data', (event, bitsyCallbackName) => {

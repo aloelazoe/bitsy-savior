@@ -11,6 +11,7 @@ const paths = global.paths = {
     set patch(val) {
         this._patch.value = val;
         this.updateTitle();
+        this.onPatchChanged();
     },
     get export() {
         return this._export.value;
@@ -32,6 +33,7 @@ const paths = global.paths = {
         this._export = { value: null, unsaved: false };
         this.lastSavedAlone = null;
         this.updateTitle();
+        this.onPatchChanged();
     },
     saveToStorage: function () {
         global.storedData.editors[global.storedData.editorIndex].paths = this.serialize();
@@ -58,6 +60,7 @@ const paths = global.paths = {
         if (!storedPaths) return;
         Object.assign(this, storedPaths);
         this.updateTitle();
+        this.onPatchChanged();
     },
     updateTitle: function () {
         if (global.bitsyWindow) {
@@ -67,6 +70,9 @@ const paths = global.paths = {
             const eDot = this._export.value && this._export.unsaved ? '•' : '';
             global.bitsyWindow.setTitle(`Patch: ${p}${pDot}   Export: ${e}${eDot}`);
         }
+    },
+    onPatchChanged: function name() {
+        // a callback that will be invoked whenever patch path is changed
     }
 };
 

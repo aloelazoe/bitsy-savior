@@ -186,7 +186,8 @@ async function loadGameDataFromFile(p, reset = true) {
     global.autosave = false;
     paths.saveToStorage();
     // attempt to load new game data. will resolve into an error message if something goes wrong
-    // tryLoadingGameData will revert to a previous game data if it catches an error
+    // tryLoadingGameData is the function injcted by bitsy-savior
+    // it will revert to a previous game data if it catches an error
     const errMessage = await global.bitsyWindow.webContents.executeJavaScript(
         `window.tryLoadingGameData(\`${data}\`)`
     );
