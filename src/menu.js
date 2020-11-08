@@ -20,7 +20,7 @@ const paths = require('./paths');
 const isMac = process.platform === 'darwin';
 const isLinux = process.platform === 'linux';
 
-const aboutPanelImagePath = path.join(app.getAppPath(), 'src/bitsy/editor/image/cat5.png');
+const aboutPanelImagePath = path.join(app.getAppPath(), 'resources/icon_256x256.png');
 
 if (isMac || isLinux) {
     app.setAboutPanelOptions({
