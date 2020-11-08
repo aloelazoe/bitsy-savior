@@ -1,0 +1,143 @@
+@font-face {
+    font-family: "Nunito";
+    src: url("../font/Nunito-Regular.ttf");
+}
+
+body {
+    font-family: "Nunito", Helvetica, Arial, sans-serif;
+    background-color: lavenderblush;
+}
+
+button {
+    font-family: sans-serif;
+    text-align: center;
+}
+
+.bigText {
+    font-size: 24px;
+}
+
+.mediumText {
+    font-size: 16px;
+}
+
+.smallText {
+    font-size: 12px;
+    font-style: italic;
+}
+
+.editorInfoItem {
+    margin-bottom: 5px;
+}
+
+#buttons {
+    margin-top: 5px;
+    padding-left: 5px;
+}
+
+#editorDescriptionInput {
+    padding: 0px;
+    width: 100%;
+    height: 72px;
+}
+
+#editorNameInput {
+    min-width: 0px;
+    width: 100%;
+    margin-left: 5px;
+}
+
+.row {
+    display: flex;
+}
+
+.column {
+    flex: 50%;
+    height: min-content;
+}
+
+.withBorder {
+    border: 1px solid black;
+    padding: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    margin: 5px;
+    border-radius: 10px;
+}
+
+.header {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+#editorInfo {
+    padding-bottom: 5px;
+}
+
+input[type="radio"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    display: none;
+}
+
+input[type="radio"]:checked + label {
+    background-color: lightpink;
+}
+
+.editorListLabel:hover {
+    background-color: rgb(255,211,214);
+}
+
+.editorListLabel {
+    display: block;
+    padding-left: 5px;
+}
+
+.credits {
+    text-align: center;
+}
+
+.title {
+    font-size: 36px;
+    text-align: center;
+}
+
+ol {
+    margin-block-start: 0;
+    margin-block-end: 0;
+    padding-inline-start: 14px;
+}
+
+textarea {
+    /* margin-bottom: -4px; */
+    font-family: Nunito, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    /* border:1px solid rgb(255,211,214); */
+    border:1px solid black;
+    border-radius: 2px;
+    background-color:rgb(255,248,250);
+}
+
+textarea:focus {
+    outline: none !important;
+    /* border:1px solid rgb(255,211,214); */
+    border:1px solid black;
+    border-radius: 2px;
+}
+
+input {
+    font-family: Nunito, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    /* border:1px solid rgb(255,211,214); */
+    border:1px solid black;
+    border-radius: 2px;
+    background-color: rgb(255,248,250);
+}
+
+input:focus {
+    outline: none !important;
+    /* border:1px solid rgb(255,211,214); */
+    border:1px solid black;
+    border-radius: 2px;
+}
