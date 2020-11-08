@@ -164,7 +164,7 @@ const menuTemplate = [
                             .then(console.log)
                             .catch(reportError);
                     }
-                    shell.openItem(paths.patch);
+                    shell.openExternal('file://' + paths.patch);
                 },
             },
             ...(!isMac ? [
