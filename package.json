@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/aloelazoe/bitsy-savior#readme",
   "devDependencies": {
-    "electron": "^6.0.4",
+    "electron": "^10.1.5",
     "electron-packager": "^14.0.5"
   },
   "dependencies": {

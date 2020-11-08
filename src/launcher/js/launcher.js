@@ -192,7 +192,7 @@ function onSetEditorPath(event) {
 }
 
 function onDeleteEditor(event) {
-    if (!window.confirm(`are you sure you want to delete ${getCurEditor().name} from the list? this will not delete any files, and you will be able to add it again, if you want`)) {
+    if (!window.confirm(`delete ${getCurEditor().name} from the list of editors?`)) {
         return;
     }
     // just changing storedData.editors directly doesn't work for some reason..

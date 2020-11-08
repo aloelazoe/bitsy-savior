@@ -38,8 +38,13 @@
         }
         #editorDescriptionInput {
             padding: 0px;
-            width: 99%;
-            height: 55px;
+            width: 100%;
+            height: 72px;
+        }
+        #editorNameInput {
+            min-width: 0px;
+            width: 100%;
+            margin-left: 5px;
         }
         .row {
             display: flex;
@@ -92,7 +97,33 @@
             padding-inline-start: 14px;
         }
         textarea {
-            margin-bottom: -4px;
+            /* margin-bottom: -4px; */
+            font-family: Nunito, Helvetica, Arial, sans-serif;
+            font-size: 16px;
+            /* border:1px solid rgb(255,211,214); */
+            border:1px solid black;
+            border-radius: 2px;
+            background-color:rgb(255,248,250);
+        }
+        textarea:focus {
+            outline: none !important;
+            /* border:1px solid rgb(255,211,214); */
+            border:1px solid black;
+            border-radius: 2px;
+        }
+        input {
+            font-family: Nunito, Helvetica, Arial, sans-serif;
+            font-size: 16px;
+            /* border:1px solid rgb(255,211,214); */
+            border:1px solid black;
+            border-radius: 2px;
+            background-color: rgb(255,248,250);
+        }
+        input:focus {
+            outline: none !important;
+            /* border:1px solid rgb(255,211,214); */
+            border:1px solid black;
+            border-radius: 2px;
         }
     </style>
     <script src='js/launcher.js'></script>
@@ -120,7 +151,11 @@
                 <!-- <div class="infoEditable editorInfoItem bigText">new editor</div> -->
 
                 <div id="editorName" class="infoDisplayed bigText editorInfoItem"></div>
-                <div class="infoEditable editorInfoItem mediumText">name: <input id="editorNameInput"></input></div>
+                <div class="infoEditable editorInfoItem mediumText">
+                    <div style="display:flex; margin-top: 4px;">
+                        <span>name: </span><input id="editorNameInput"></input>
+                    </div>
+                </div>
 
                 <div class="infoEditable editorInfoItem mediumText">location: 
                     <button id="editorPathInput" onclick="onSetEditorPath(event);">🔎</button>
@@ -130,7 +165,12 @@
                 <div id="editorType"  class="smallText editorInfoItem infoDisplayed"></div>
 
                 <div id="editorDescription" class="infoDisplayed editorInfoItem mediumText"></div>
-                <div class="infoEditable editorInfoItem mediumText">description: <br> <textarea id="editorDescriptionInput"></textarea></div>
+                <div class="infoEditable editorInfoItem mediumText">description:
+                    <br>
+                    <div style="display:flex;">
+                        <textarea id="editorDescriptionInput"></textarea>
+                    </div>
+                </div>
                 
                 <div id="locationTip" class="smallText infoEditable editorInfoItem">
                     <ol>

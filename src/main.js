@@ -74,7 +74,8 @@ function createLauncherWindow() {
         height: 512,
         fullscreenWindowTitle: true,
         webPreferences: {
-            nodeIntegration: true
+            nodeIntegration: true,
+            enableRemoteModule: true,
         }
     })
 
@@ -148,7 +149,8 @@ function createEditorWindow() {
         fullscreenWindowTitle: true,
         webPreferences: {
             nodeIntegration: true,
-            preload: require.resolve('./injector')
+            enableRemoteModule: true,
+            preload: require.resolve('./injector'),
         }
     })
 
