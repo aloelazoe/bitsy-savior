@@ -92,6 +92,7 @@ function createLauncherWindow() {
         width: 512,
         height: 512,
         fullscreenWindowTitle: true,
+        backgroundColor: '#fff0f5',
         webPreferences: {
             nodeIntegration: true,
             enableRemoteModule: true,
