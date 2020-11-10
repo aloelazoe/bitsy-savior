@@ -26,6 +26,7 @@ function initFeatures () {
             let parent = window;
             let object = undefined;
             for (let index = 0; index < funcNameArray.length; index++) {
+                if (!parent) break;
                 object = parent[funcNameArray[index]];
                 parent = object;
             }
