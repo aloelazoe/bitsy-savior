@@ -214,6 +214,17 @@ async function loadGameDataFromFile(p, reset = true) {
     paths.saveToStorage();
 }
 
+async function tryLoadingEditorPatch() {
+    if (!paths.editorPatch) return;
+    const editorPatchCode = await fse.readFile(paths.editorPatch, 'utf8');
+    console.log('loading editor patch from: ' + paths.editorPatch);
+    try {
+        await global.bitsyWindow.webContents.executeJavaScript(editorPatchCode);
+    } catch (err) {
+        throw new Error(`error when loading editor patch ${paths.editorPatch}\n`, err);
+    }
+}
+
 function reportError(err) {
     console.error(err);
     dialog.showErrorBox(err.name, err.stack);
@@ -230,4 +241,5 @@ exports.tryPatchAndExport = tryPatchAndExport;
 exports.ensureGameData = ensureGameData;
 exports.checkUnsavedThen = checkUnsavedThen;
 exports.loadGameDataFromFile = loadGameDataFromFile;
+exports.tryLoadingEditorPatch = tryLoadingEditorPatch;
 exports.reportError = reportError;

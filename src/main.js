@@ -6,6 +6,7 @@ const {
     ipcMain,
     shell
 } = require('electron');
+const features = require('./features');
 const storage = require('./storage');
 const {
     tryPatchAndExport,
@@ -13,7 +14,8 @@ const {
     reportError,
     saveNewHtml,
     exportData,
-    loadGameDataFromFile
+    loadGameDataFromFile,
+    tryLoadingEditorPatch
 } = require('./utils');
 const menu = require('./menu');
 const { checkUpdates } = require('./check-updates');
@@ -168,9 +170,13 @@ function createEditorWindow() {
         height: height,
         fullscreenWindowTitle: true,
         webPreferences: {
-            nodeIntegration: true,
-            enableRemoteModule: true,
-            preload: require.resolve('./injector'),
+            nodeIntegration: false,
+            enableRemoteModule: false,
+            allowRunningInsecureContent: false,
+            contextIsolation: true,
+            sandbox: true,
+            // preload: require.resolve('./injector'),
+            preload: require.resolve('./preload'),
         }
     })
 
@@ -190,19 +196,19 @@ function createEditorWindow() {
     Menu.setApplicationMenu(menu);
 
     paths.setFromStorage();
-    let p = paths[paths.lastSavedAlone] || paths.export || paths.patch;
-    if (p) {
-        loadGameDataFromFile(p, false)
-            .then(() => console.log('loaded game data from:', p))
-            .catch((err) => {
-                paths.reset();
-                paths.saveToStorage();
-                reportError;
-            });
-    }
 
     win.on('page-title-updated', (e) => e.preventDefault());
-    paths.updateTitle();
+    
+    win.webContents.on('did-finish-load', async (event) => {
+        // after loading paths, execute an editor patch if it was specified
+        await tryLoadingEditorPatch().catch(reportError);
+
+        const featureStatus = await features.init().catch(reportError);
+        console.log('feature status:');
+        console.log(featureStatus);
+
+        updateMenuItems(featureStatus);
+    });
 
     // ask before closing when you have unsaved changes
     win.on('close', function (event) {
@@ -221,24 +227,37 @@ function createEditorWindow() {
     });
 }
 
-ipcMain.on('feature-status', (event, featureStatus) => {
-    console.log('recieved feature status');
-    console.log(featureStatus);
-
+function updateMenuItems (featureStatus) {
     // enable and disable menu items according to available features
     const fileItems = Menu.getApplicationMenu().items.find(item => item.label === 'File').submenu.items;
     fileItems.forEach(item => {
         if (item.label === 'Open') {
-            item.enabled = Boolean(featureStatus['open files in editor']);
+            item.enabled = Boolean(featureStatus['open']);
         } else if (['Patch game data', 'Export game data', 'Patch and export', 'Patch game data in...', 'Export game data to...'].indexOf(item.label) !== -1) {
-            item.enabled = Boolean(featureStatus['save data to files']);
+            item.enabled = Boolean(featureStatus['get-data']);
         } else if (item.label === 'Save as new html...') {
-            item.enabled = Boolean(featureStatus['save as new html']);
+            item.enabled = Boolean(featureStatus['save-new']);
         }
     });
-});
 
-ipcMain.on('save-file', (event, fileName, fileData) => {
+    // if opening files feature is working, load game data from save paths
+    if (Boolean(featureStatus['open'])) {
+        console.log('if opening files feature is working, load game data from save paths');
+        let p = paths[paths.lastSavedAlone] || paths.export || paths.patch;
+        if (p) {
+            loadGameDataFromFile(p, false)
+                .then(() => console.log('loaded game data from:', p))
+                .catch((err) => {
+                    paths.reset();
+                    paths.saveToStorage();
+                    reportError;
+                });
+        }
+        paths.updateTitle();
+    }
+};
+
+ipcMain.on('save-new-file', (event, fileName, fileData) => {
     if (fileName.endsWith('.html')) {
         saveNewHtml(fileData);
     } else if (fileName.endsWith('.bitsy')) {
@@ -250,13 +269,12 @@ ipcMain.on('mark-unsaved', () => {
     paths.markUnsaved();
 });
 
-ipcMain.on('reset-game-data', (event, bitsyCallbackName) => {
+ipcMain.handle('reset-game-data', () => {
     console.log('reset-game-data was raised');
     checkUnsavedThen(() => {
         paths.reset();
         paths.lastSavedAlone = null;
         paths.saveToStorage();
-        event.reply('call', bitsyCallbackName);
     }, 'resetting game data');
 });
 

@@ -148,8 +148,7 @@ const menuTemplate = [
                 accelerator: 'CommandOrControl+Alt+S',
                 type: 'normal',
                 click: () => {
-                    global.bitsyWindow.webContents.executeJavaScript('window.exportGame()')
-                        .catch(reportError);
+                    global.bitsyWindow.webContents.executeJavaScript('window.exportGame()').catch(reportError);;
                 }
             },
             { type: 'separator' },
