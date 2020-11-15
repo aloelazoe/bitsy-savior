@@ -8,6 +8,9 @@ const {
 } = require('electron');
 const features = require('./features');
 const storage = require('./storage');
+const fse = require('fs-extra');
+const path = require('path');
+const url = require('url');
 const {
     tryPatchAndExport,
     checkUnsavedThen,
@@ -25,8 +28,6 @@ paths.onPatchChanged = function () {
     // enable or disable 'run game' menu item depending on
     // whether there is an html file for patching that can be run
 
-    // console.log('onPatchChanged has been called');
-    
     let runItem;
     try {
         runItem = Menu.getApplicationMenu().items.find(item => item.label === 'File')
@@ -41,6 +42,7 @@ paths.onPatchChanged = function () {
 }
 
 global.autosave = false;
+let currentPermissions = {};
 
 app.on('ready', () => {
     // load stored data about the editors
@@ -116,48 +118,79 @@ ipcMain.on('setEditorPath', (event, arg) => {
             name: 'Html with a bitsy editor',
             extensions: ['html']
         }]
-    })
-    .then((result) => {
-        // const { filePaths: [p] } = result;
-        // console.log('result:');
-        // console.log(result);
-        if (result.canceled || result.filePaths.length === 0) return;
-        const newPath = result.filePaths[0];
-        switch (arg) {
-            case 'current':
-                const curEditor = global.storedData.editors[global.storedData.editorIndex];
-                // console.log(curEditor);
-                console.log(`setting the path of the current editor ${curEditor.name} to ${newPath}`);
-                curEditor.editorPath = newPath;
-                break;
-            
-            case 'new':
-                // console.log(global.newEditor);
-                console.log(`setting the path of the new editor ${global.newEditor.name} to ${newPath}`);
-                global.newEditor.editorPath = newPath;
-                break;
-        
-            default:
-                break;
-        }
-        event.reply('setEditorPathReply');
-    })
-});
+    }).then((result) => {
+            if (result.canceled || result.filePaths.length === 0) return;
+            const newPath = result.filePaths[0];
+            switch (arg) {
+                case 'current':
+                    const curEditor = global.storedData.editors[global.storedData.editorIndex];
+                    console.log(`setting the path of the current editor ${curEditor.name} to ${newPath}`);
+                    curEditor.editorPath = newPath;
+                    break;
 
-ipcMain.on('runEditor', () => {
-    createEditorWindow();
-    if (global.launcherWindow && !global.launcherWindow.isDestroyed()) {
-        launcherWindow.destroy();
-    }
+                case 'new':
+                    console.log(`setting the path of the new editor ${global.newEditor.name} to ${newPath}`);
+                    global.newEditor.editorPath = newPath;
+                    break;
+
+                default:
+                    break;
+            }
+            event.reply('setEditorPathReply');
+        })
 });
 
 ipcMain.on('saveData', () => {
     storage.save(global.storedData);
 });
 
-function createEditorWindow() {
+ipcMain.on('runEditor', async () => {
+    const currentEditor = global.storedData.editors[global.storedData.editorIndex];
+    let editorUrl;
+    
+    if (currentEditor.type === 'web') {
+        // todo
+    } else {
+        let editorPath;
+    
+        if (currentEditor.type === 'builtinVanilla') {
+            editorPath = path.join(app.getAppPath(), 'src/bitsy/editor/index.html');
+        } else {
+            editorPath = currentEditor.editorPath;
+        }
+
+        // check if file still exists first
+        const exists = await fse.pathExists(editorPath);
+        if (!exists) {
+            console.log(`file ${editorPath} doesn't exist`);
+            dialog.showMessageBox({
+                type: 'info',
+                buttons: [],
+                title: 'bitsy-savior',
+                message: `can't open this editor because the file doesn't exist 😿`,
+                detail: editorPath,
+            });
+            return;
+        }
+    
+        editorUrl = url.format({
+            protocol: 'file',
+            slashes: true,
+            pathname: editorPath,
+        })
+    }
+
+    createEditorWindow(editorUrl);
+    if (global.launcherWindow && !global.launcherWindow.isDestroyed()) {
+        launcherWindow.destroy();
+    }
+});
+
+function createEditorWindow(editorUrl) {
     const { screen } = require('electron');
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+    // reset permissions
+    currentPermissions = {};
 
     if (global.bitsyWindow && !global.bitsyWindow.isDestroyed()) {
         console.log('bitsy editor is already running!');
@@ -175,21 +208,47 @@ function createEditorWindow() {
             allowRunningInsecureContent: false,
             contextIsolation: true,
             sandbox: true,
-            // preload: require.resolve('./injector'),
             preload: require.resolve('./preload'),
         }
     })
 
-    let editorPath;
+    win.webContents.session.setPermissionRequestHandler((webContents, permission, callback) => {
+        // permission String - Enum of 'media', 'geolocation', 'notifications', 'midiSysex', 'pointerLock', 'fullscreen', 'openExternal'
 
-    const currentEditor = global.storedData.editors[global.storedData.editorIndex];
-    if (currentEditor.type === 'builtinVanilla') {
-        editorPath = 'src/bitsy/editor/index.html';
-    } else {
-        editorPath = currentEditor.editorPath;
-    }
+        console.log(`${webContents.getURL()} requested a permission for ${permission}`);
 
-    win.loadFile(editorPath);
+        // allow pointer lock and fullscreen without asking
+        if (permission === 'pointerLock' || permission === 'fullscreen') {
+            callback(true);
+        } else {
+            // ask for all other permissions and remember choices for the current session
+            // bitsy editors aren't supposed to ask for them but it might become needed
+            // if folks find ways how bitsy savior can be useful with other tools
+            if (currentPermissions.hasOwnProperty(permission)) {
+                callback(currentPermissions[permission]);
+                console.log(`${currentPermissions[permission] && 'allowed' || "didn't allow"} ${webContents.getURL()} access to ${permission}`);
+            } else {
+                // open a simple dialog asking about requested permission and remember choices for current session
+                dialog.showMessageBox({
+                    type: 'question',
+                    buttons: ['Allow', "Don't allow"],
+                    defaultId: 1,
+                    message: `${webContents.getURL()} requested a permission for ${permission}`,
+                    cancelId: 1,
+                    noLink: true
+                }).then(({ response: buttonId }) => {
+                    let allow = false;
+                    if (buttonId === 0) allow = true;
+                    currentPermissions[permission] = allow;
+                    callback(allow);
+                    console.log(`${allow && 'allowed' || "didn't allow"} ${webContents.getURL()} access to ${permission}`);
+                });
+            }
+        }
+
+    });
+
+    win.loadURL(editorUrl);
     // win.webContents.openDevTools();
 
     // set menu before loading paths
@@ -198,7 +257,14 @@ function createEditorWindow() {
     paths.setFromStorage();
 
     win.on('page-title-updated', (e) => e.preventDefault());
-    
+
+    // exit pointer lock when pressing escape
+    win.webContents.on('before-input-event', (event, input) => {
+        if (input.type === 'keyUp' && input.key === 'Escape') {
+            win.webContents.executeJavaScript('if (document.pointerLockElement) {document.exitPointerLock()} else if (document.fullscreenElement) {document.exitFullscreen()}');
+        }
+    })
+
     win.webContents.on('did-finish-load', async (event) => {
         // after loading paths, execute an editor patch if it was specified
         await tryLoadingEditorPatch().catch(reportError);
@@ -227,7 +293,7 @@ function createEditorWindow() {
     });
 }
 
-function updateMenuItems (featureStatus) {
+function updateMenuItems(featureStatus) {
     // enable and disable menu items according to available features
     const fileItems = Menu.getApplicationMenu().items.find(item => item.label === 'File').submenu.items;
     fileItems.forEach(item => {
@@ -242,7 +308,6 @@ function updateMenuItems (featureStatus) {
 
     // if opening files feature is working, load game data from save paths
     if (Boolean(featureStatus['open'])) {
-        console.log('if opening files feature is working, load game data from save paths');
         let p = paths[paths.lastSavedAlone] || paths.export || paths.patch;
         if (p) {
             loadGameDataFromFile(p, false)
