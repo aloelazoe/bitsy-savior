@@ -94,6 +94,7 @@ function createLauncherWindow() {
         fullscreenWindowTitle: true,
         backgroundColor: '#fff0f5',
         webPreferences: {
+            spellcheck: false,
             nodeIntegration: true,
             enableRemoteModule: true,
         }
@@ -205,6 +206,7 @@ async function createEditorWindow(editorUrl) {
         fullscreenWindowTitle: true,
         show: false,
         webPreferences: {
+            spellcheck: false,
             nodeIntegration: false,
             enableRemoteModule: false,
             allowRunningInsecureContent: false,
@@ -212,7 +214,7 @@ async function createEditorWindow(editorUrl) {
             sandbox: true,
             preload: require.resolve('./preload'),
         }
-    })
+    });
 
     win.webContents.session.setPermissionRequestHandler((webContents, permission, callback) => {
         // permission String - Enum of 'media', 'geolocation', 'notifications', 'midiSysex', 'pointerLock', 'fullscreen', 'openExternal'
