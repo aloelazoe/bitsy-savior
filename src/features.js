@@ -91,7 +91,9 @@ function checkElementId(elementId) {
 }
 
 module.exports.init = async function initFeatures () {
-    console.log('🐈 initializing bitsy-savior features 🐈')
+    let fullReport = '🐈 initializing bitsy-savior features 🐈';
+
+    console.log(fullReport);
 
     const exposeToRenderer = [];
     const featureStatus = {};
@@ -119,7 +121,8 @@ module.exports.init = async function initFeatures () {
             featureOk = featureOk && elementOk;
         }
 
-        const status = `${feature.name}\nrequirements: ${requirements.join(', ')}`;
+        const status = `${feature.name}${featureOk? '😸': '😿'}\nrequirements: ${requirements.join(', ')}`;
+        fullReport += '\n\n' + status;
         if (featureOk) {
             console.log(status);
             if (feature.exposeToRenderer) {
@@ -161,7 +164,11 @@ module.exports.init = async function initFeatures () {
         } 
     }
     
-    await global.bitsyWindow.webContents.executeJavaScript(`console.log(${JSON.stringify(featureStatus)})`);
+    try {
+        await global.bitsyWindow.webContents.executeJavaScript(`console.log(\`${fullReport}\`)`);
+    } catch (err) {
+        console.error(err);
+    }
 
     return featureStatus;
 }
