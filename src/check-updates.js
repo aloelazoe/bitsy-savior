@@ -12,6 +12,9 @@ let butlerTarget;
 let butlerChannel;
 
 function checkUpdates() {
+    // don't check for updates when running in development environment
+    if (!app.isPackaged) return;
+
     const itchApp = process.argv.indexOf('itchApp') !== -1;
     if (itchApp) console.log(`${app.getName()} was launched by itch app`);
 
