@@ -226,8 +226,10 @@ async function tryLoadingEditorPatch() {
 }
 
 function reportError(err) {
+    console.log('error report:');
     console.error(err);
-    dialog.showErrorBox(err.name, err.stack);
+    if(!err) return;
+    dialog.showErrorBox(err.name || 'error', err.stack || err);
 }
 
 exports.showPatchDialog = showPatchDialog;
