@@ -263,7 +263,7 @@ function getCurrentlyCheckedType() {
 function updateDisplayedInfo() {
     const curEditor = getCurEditor();
     editorNameEl.innerText = curEditor.name;
-    editorTypeEl.innerText = curEditor.type.replace(/([A-Z]+)/g, " $1").replace(/([A-Z][a-z])/g, " $1").toLowerCase();
+    editorTypeEl.innerText = decorateEditorType(curEditor.type);
     editorDescriptionEl.innerText = curEditor.description;
     if (curEditor.type === 'builtinVanilla') {
         setUpEditorButtonEl.style.display = "none";
@@ -271,6 +271,14 @@ function updateDisplayedInfo() {
     } else {
         setUpEditorButtonEl.style.display = "inline";
         deleteEditorButtonEl.style.display = "inline";
+    }
+}
+
+function decorateEditorType(type) {
+    if (type === 'builtinVanilla') {
+        return 'built-in';
+    } else {
+        return type.replace(/([A-Z]+)/g, " $1").replace(/([A-Z][a-z])/g, " $1").toLowerCase();
     }
 }
 
