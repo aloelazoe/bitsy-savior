@@ -1,3 +1,5 @@
+const path = require('path');
+const url = require('url');
 const {
     app,
     BrowserWindow,
@@ -9,9 +11,8 @@ const {
 const features = require('./features');
 const storage = require('./storage');
 const fse = require('fs-extra');
+const fetch = require('node-fetch');
 const normalizeUrl = require('normalize-url');
-const path = require('path');
-const url = require('url');
 const {
     tryPatchAndExport,
     checkUnsavedThen,
@@ -52,6 +53,7 @@ app.on('ready', () => {
 
     // if data doesn't include editor list because it's from the older version,
     // convert it and write it to the file first
+    // todo: add example with web editor too
     if (!storedData.hasOwnProperty('editors') || !storedData.hasOwnProperty('editorIndex')) {
         const storedPaths = storedData.paths;
         if (storedPaths) Object.assign(paths, storedPaths);
@@ -137,6 +139,28 @@ ipcMain.on('runEditor', async () => {
     
     if (currentEditor.type === 'web') {
         editorUrl = normalizeUrl(currentEditor.editorPath);
+        // get direct url for editors on itch.io
+        if ((new URL(editorUrl)).host.includes('itch.io')) {
+            console.log('we are on the itch.io page. getting iframe source to open embedded web editor directly');
+            editorUrl = await fetch(editorUrl)
+                .then(res => res.text())
+                .then(body => {
+                    const match = body.match(/&lt;iframe.*src=&quot;(.*?)&quot;/m);
+                    if (match && match[1] && typeof match[1] === 'string') {
+                        const newUrl = normalizeUrl(match[1], {forceHttps: true});
+                        console.log('iframe source url from itch.io page: ' + newUrl);
+                        // todo: maye check that it's valid first?
+                        return newUrl;
+                    } else {
+                        const message = `couldn't get iframe source from itch.io page to get direct link to the editor at:\n${editorUrl}`;
+                        console.error(message);
+                        dialog.showErrorBox('error when loading the editor', message);
+                        return null;
+                    }
+                })
+                .catch(reportError);
+            if (!editorUrl) return;
+        }
     } else {
         let editorPath;
     
