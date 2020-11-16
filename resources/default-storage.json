@@ -1,0 +1,40 @@
+{
+    "editors": [
+        {
+            "name": "bitsy v7.2",
+            "description": "vanilla bitsy that comes packaged with bitsy-savior. always stays compatible, but only gets updated together with bitsy-savior",
+            "type": "builtinVanilla",
+            "paths": {
+                "_patch": {
+                    "value": null,
+                    "unsaved": false
+                },
+                "_export": {
+                    "value": null,
+                    "unsaved": false
+                },
+                "lastSavedAlone": null,
+                "editorPatch": null
+            }
+        },
+        {
+            "name": "bitsy on itch.io",
+            "description": "online version of bitsy. always up-to-date, but it's not guaranteed that new bitsy updates and itch.io page will stay compatible with bitsy-savior at any time",
+            "type": "web",
+            "editorPath": "https://ledoux.itch.io/bitsy",
+            "paths": {
+                "_patch": {
+                    "value": null,
+                    "unsaved": false
+                },
+                "_export": {
+                    "value": null,
+                    "unsaved": false
+                },
+                "lastSavedAlone": null,
+                "editorPatch": null
+            }
+        }
+    ],
+    "editorIndex": 0
+}

@@ -53,21 +53,14 @@ app.on('ready', () => {
 
     // if data doesn't include editor list because it's from the older version,
     // convert it and write it to the file first
-    // todo: add example with web editor too
+    // if we are updating from a verions before multiple editors support,
+    // add default data with built-in bitsy and itch.io bitsy
     if (!storedData.hasOwnProperty('editors') || !storedData.hasOwnProperty('editorIndex')) {
         const storedPaths = storedData.paths;
         if (storedPaths) Object.assign(paths, storedPaths);
-        storedData = {
-            editors: [
-                {
-                    name: 'bitsy',
-                    description: 'vanilla bitsy that came packaged with bitsy-savior',
-                    type: 'builtinVanilla',
-                    paths: paths.serialize(),
-                }
-            ],
-            editorIndex: 0
-        }
+        const defaultData = fse.readJSONSync(path.join(app.getAppPath(), 'resources/default-storage.json'));
+        defaultData.editors[0].paths = paths.serialize();
+        storedData = defaultData;
         storage.save(storedData);
     }
 
