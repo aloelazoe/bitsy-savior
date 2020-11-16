@@ -15,6 +15,9 @@ let editorPathEl;
 let editorNameInputEl;
 let editorDescriptionInputEl;
 let editorPathButtonEl;
+
+let editorUrlInputEl;
+
 let newEditorWarningEl;
 let locationTipEl;
 
@@ -40,9 +43,10 @@ function init() {
     deleteEditorButtonEl = document.getElementById('deleteEditorButton');
 
     editorNameInputEl = document.getElementById('editorNameInput');
+    editorUrlInputEl = document.getElementById('editorUrlInput');
     editorDescriptionInputEl = document.getElementById('editorDescriptionInput');
     editorPathButtonEl = document.getElementById('editorPathButton');
-    
+
     newEditorWarningEl = document.getElementById('newEditorWarning');
     newEditorWarningEl.style.display = 'none';
     locationTipEl = document.getElementById('locationTip');
@@ -52,6 +56,9 @@ function init() {
 
     infoDisplayedEls = Array.prototype.slice.call(document.getElementsByClassName('infoDisplayed'));
     infoEditableEls = Array.prototype.slice.call(document.getElementsByClassName('infoEditable'));
+
+    typeWebEls = Array.prototype.slice.call(document.getElementsByClassName('typeWeb'));
+    typeLocalEls = Array.prototype.slice.call(document.getElementsByClassName('typeLocal'));
 
     storedData = remote.getGlobal('storedData');
     newEditor = remote.getGlobal('newEditor');
@@ -100,6 +107,7 @@ function checkSelectedEditor() {
 
 function onAddEditorShow(event) {
     isAddingNewEditor = true;
+    const curEditor = getCurEditor();
 
     // uncheck all editors in the list, but don't change editorIndex in data yet
     const editorListControls = editorListEl.elements;
@@ -113,28 +121,33 @@ function onAddEditorShow(event) {
     // reset editable fields in editor info panel
     clearInputs();
 
-    // for now it can only be local
-    editorTypeEl.innerText = 'local';
-
     // show editable fields in editor info panel
     setInfoEditable(true);
+
+    // set editor type
+    if (getCurrentlyCheckedType() !== curEditor.type) {
+        document.getElementById("editorType" + curEditor.type.replace(/^\w/, c => c.toUpperCase())).click();
+    }
+    updateEditorType();
 }
 
 function onConfirmEditor(event) {
-    // todo: check if all fields are valid and add editor data
-    // todo: update editor list
-    // todo: change editor index so that new editor is selected
     const curEditor = getCurEditor();
     const newName = editorNameInputEl.value;
     console.log('newName ' + newName);
-    // console.log('path ' + curEditor.editorPath);
-    if (newName.length < 1 || (!curEditor.editorPath || curEditor.editorPath.length < 1)) {
+
+    const curType = curEditor.type = getCurrentlyCheckedType();
+
+    const newPath = curType === 'web'? editorUrlInputEl.value: editorPathEl.innerText;
+
+    if (newName.length < 1 || (!newPath || newPath.length < 1)) {
         // show warning
         newEditorWarningEl.style.display = 'block';
         return;
     }
 
     curEditor.name = newName;
+    curEditor.editorPath = newPath;
     curEditor.description = editorDescriptionInputEl.value;
     // editor path is already set
 
@@ -170,25 +183,18 @@ function onSetUpEditor(event) {
     // hide buttons
     buttonsEl.style.display = 'none';
 
-    // update editable fields in editor info panel
-    updateInputs();
-
     // show editable fields in editor info panel
     setInfoEditable(true);
+    // update editable fields in editor info panel
+    updateInputs();
 }
 
 ipcRenderer.on('resetNewEditorReply', (event, arg) => {
     newEditor = remote.getGlobal('newEditor');
 })
 
-ipcRenderer.on('setEditorPathReply', (event, arg) => {
-    // update path display
-    editorPathEl.innerText = getCurEditor().editorPath;
-})
-
 function onSetEditorPath(event) {
-    const kind = isAddingNewEditor? 'new': 'current';
-    ipcRenderer.send('setEditorPath', kind);
+    ipcRenderer.invoke('chooseEditorPath').then((newPath) => { editorPathEl.innerText = newPath });
 }
 
 function onDeleteEditor(event) {
@@ -222,6 +228,38 @@ function onSwitchEditor(event) {
     // }
 }
 
+function updateEditorType() {
+    const curType = getCurrentlyCheckedType();
+    console.log('switched editor type to ' + curType);
+
+    const webOn = curType === 'web';
+
+    if (webOn) {
+        editorPathEl.innerText = '';
+    } else {
+        editorUrlInputEl.value = '';
+    }
+
+    typeWebEls.forEach(el => {
+        const on = el.tagName === 'SPAN'? 'inline': 'block';
+        el.style.display = webOn? on: 'none';
+        locationTipEl.style.display = 'none';
+    });
+    typeLocalEls.forEach(el => {
+        const on = el.tagName === 'SPAN'? 'inline': 'block';
+        el.style.display = webOn? 'none': on;
+    });
+}
+
+function getCurrentlyCheckedType() {
+    let editorType;
+    [...document.getElementsByName('editorType')].forEach((el) => {
+        if (el.checked) editorType = el.value;
+    });
+    console.log('getCurrentlyCheckedType is ' + editorType);
+    return editorType;
+}
+
 function updateDisplayedInfo() {
     const curEditor = getCurEditor();
     editorNameEl.innerText = curEditor.name;
@@ -238,16 +276,23 @@ function updateDisplayedInfo() {
 
 function updateInputs() {
     const curEditor = getCurEditor();
+
+    if (getCurrentlyCheckedType() !== curEditor.type) {
+        document.getElementById("editorType" + curEditor.type.replace(/^\w/, c => c.toUpperCase())).click();
+    }
+    updateEditorType();
     
     editorNameInputEl.value = curEditor.name;
     editorDescriptionInputEl.value = curEditor.description;
     editorPathEl.innerText = curEditor.editorPath;
+    editorUrlInputEl.value = curEditor.editorPath;
 }
 
 function clearInputs() {
     editorNameInputEl.value = '';
     editorDescriptionInputEl.value = '';
     editorPathEl.innerText = '';
+    editorUrlInputEl.value = '';
 }
 
 function onToggleEditorTip(event) {

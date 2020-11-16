@@ -31,22 +31,43 @@
                 <div id="editorName" class="infoDisplayed bigText editorInfoItem"></div>
                 <div class="infoEditable editorInfoItem mediumText">
                     <div style="display:flex; margin-top: 4px;">
-                        <span>name: </span><input id="editorNameInput"></input>
+                        <!-- <span>name: </span> -->
+                        <input id="editorNameInput" class="editorLineInput" placeholder="name"></input>
+                    </div>
+                </div>
+                
+                <div id="editorTypeSelect"  class="mediumText editorInfoItem infoEditable">
+                    <form id="editorTypeForm">
+                        <!-- <span>type:</span> -->
+                        <input type="radio" name="editorType" id="editorTypeWeb" value="web" onchange="updateEditorType();"></input>
+                        <label for="editorTypeWeb" class="editorTypeLabel">web</label>
+                        <input type="radio" name="editorType" id="editorTypeLocal" value="local" onchange="updateEditorType();"></input>
+                        <label for="editorTypeLocal" class="editorTypeLabel">local</label>
+                    </form>
+                </div>
+
+                <div class="infoEditable editorInfoItem mediumText typeWeb">
+                    <div style="display:flex; margin-top: 4px;">
+                        <!-- <span>url: </span> -->
+                        <input id="editorUrlInput" class="editorLineInput" placeholder="url"></input>
                     </div>
                 </div>
 
-                <div class="infoEditable editorInfoItem mediumText">location: 
+                <div class="infoEditable editorInfoItem mediumText typeLocal">
+                    <!-- <span>location: </span> -->
+                    <button id="editorTipToggle" onclick="onToggleEditorTip(event);">ℹ️</button>
                     <button id="editorPathInput" onclick="onSetEditorPath(event);">🔎</button>
                 </div>
-                <div id="editorPath" class="smallText infoEditable editorInfoItem"></div>
+                <div id="editorPath" class="smallText infoEditable editorInfoItem typeLocal"></div>
 
                 <div id="editorType"  class="smallText editorInfoItem infoDisplayed"></div>
 
                 <div id="editorDescription" class="infoDisplayed editorInfoItem mediumText"></div>
-                <div class="infoEditable editorInfoItem mediumText">description:
-                    <br>
+                <div class="infoEditable editorInfoItem mediumText">
+                    <!-- <span>description:</span> -->
+                    <!-- <br> -->
                     <div style="display:flex;">
-                        <textarea id="editorDescriptionInput"></textarea>
+                        <textarea id="editorDescriptionInput" placeholder="description"></textarea>
                     </div>
                 </div>
                 
@@ -58,12 +79,15 @@
                         <li>select &quot;index.html&quot;</li>
                     </ol>                        
                 </div>
-                <div id="newEditorWarning" class="editorInfoItem smallText">to add a new editor, you need to set its name and location</div>
+                <div id="newEditorWarning" class="editorInfoItem smallText">
+                    <span>to add a new editor, you need to set its name and </span>
+                    <span class="typeWeb">url</span>
+                    <span class="typeLocal">choose the file to open</span>
+                </div>
 
                 <div class="infoEditable editorInfoItem">
                     <button id="confirmEditorButton" onclick="onConfirmEditor(event);">👍</button>
                     <button id="cancelEditorButton" onclick="onCancelEditor(event);">↩️</button>
-                    <button id="editorTipToggle" onclick="onToggleEditorTip(event);">ℹ️</button>
                 </div>
             </div>
         </div>

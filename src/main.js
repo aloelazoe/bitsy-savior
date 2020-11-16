@@ -81,7 +81,7 @@ function makeNewEditor() {
     return {
         name: '',
         description: '',
-        type: 'local',
+        type: 'web',
         editorPath: '',
         paths: paths.serializeEmpty(),
     };
@@ -112,33 +112,19 @@ ipcMain.on('resetNewEditor', (event) => {
     event.reply('resetNewEditorReply');
 });
 
-ipcMain.on('setEditorPath', (event, arg) => {
-    dialog.showOpenDialog({
+ipcMain.handle('chooseEditorPath', async (event, arg) => {
+    const result = await dialog.showOpenDialog({
         buttonLabel: 'Select',
         filters: [{
             name: 'Html with a bitsy editor',
             extensions: ['html']
         }]
-    }).then((result) => {
-            if (result.canceled || result.filePaths.length === 0) return;
-            const newPath = result.filePaths[0];
-            switch (arg) {
-                case 'current':
-                    const curEditor = global.storedData.editors[global.storedData.editorIndex];
-                    console.log(`setting the path of the current editor ${curEditor.name} to ${newPath}`);
-                    curEditor.editorPath = newPath;
-                    break;
-
-                case 'new':
-                    console.log(`setting the path of the new editor ${global.newEditor.name} to ${newPath}`);
-                    global.newEditor.editorPath = newPath;
-                    break;
-
-                default:
-                    break;
-            }
-            event.reply('setEditorPathReply');
-        })
+    });
+    if (result.canceled || result.filePaths.length === 0) {
+        return '';
+    } else {
+        return result.filePaths[0];
+    }
 });
 
 ipcMain.on('saveData', () => {
