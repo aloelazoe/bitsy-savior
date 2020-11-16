@@ -9,6 +9,7 @@ const {
 const features = require('./features');
 const storage = require('./storage');
 const fse = require('fs-extra');
+const normalizeUrl = require('normalize-url');
 const path = require('path');
 const url = require('url');
 const {
@@ -149,7 +150,7 @@ ipcMain.on('runEditor', async () => {
     let editorUrl;
     
     if (currentEditor.type === 'web') {
-        // todo
+        editorUrl = normalizeUrl(currentEditor.editorPath);
     } else {
         let editorPath;
     
@@ -180,13 +181,10 @@ ipcMain.on('runEditor', async () => {
         })
     }
 
-    createEditorWindow(editorUrl);
-    if (global.launcherWindow && !global.launcherWindow.isDestroyed()) {
-        launcherWindow.destroy();
-    }
+    await createEditorWindow(editorUrl);
 });
 
-function createEditorWindow(editorUrl) {
+async function createEditorWindow(editorUrl) {
     const { screen } = require('electron');
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
     // reset permissions
@@ -202,6 +200,7 @@ function createEditorWindow(editorUrl) {
         width: width,
         height: height,
         fullscreenWindowTitle: true,
+        show: false,
         webPreferences: {
             nodeIntegration: false,
             enableRemoteModule: false,
@@ -245,36 +244,16 @@ function createEditorWindow(editorUrl) {
                 });
             }
         }
-
     });
-
-    win.loadURL(editorUrl);
-    // win.webContents.openDevTools();
-
-    // set menu before loading paths
-    Menu.setApplicationMenu(menu);
-
-    paths.setFromStorage();
 
     win.on('page-title-updated', (e) => e.preventDefault());
 
-    // exit pointer lock when pressing escape
+    // exit pointer lock or fullscreen when pressing escape
     win.webContents.on('before-input-event', (event, input) => {
         if (input.type === 'keyUp' && input.key === 'Escape') {
             win.webContents.executeJavaScript('if (document.pointerLockElement) {document.exitPointerLock()} else if (document.fullscreenElement) {document.exitFullscreen()}');
         }
     })
-
-    win.webContents.on('did-finish-load', async (event) => {
-        // after loading paths, execute an editor patch if it was specified
-        await tryLoadingEditorPatch().catch(reportError);
-
-        const featureStatus = await features.init().catch(reportError);
-        console.log('feature status:');
-        console.log(featureStatus);
-
-        updateMenuItems(featureStatus);
-    });
 
     // ask before closing when you have unsaved changes
     win.on('close', function (event) {
@@ -291,6 +270,42 @@ function createEditorWindow(editorUrl) {
         shell.openExternal(url)
             .catch(console.error);
     });
+
+    try {
+        console.log('loading editor url ' + editorUrl);
+        await win.webContents.loadURL(editorUrl);
+        
+        // we get here if the page has loaded without errors
+        win.show();
+        // set menu before loading paths
+        Menu.setApplicationMenu(menu);
+        paths.setFromStorage();
+
+        // after loading paths, execute an editor patch if it was specified
+        await tryLoadingEditorPatch().catch(reportError);
+
+        const featureStatus = await features.init().catch(reportError);
+        console.log('feature status:');
+        console.log(featureStatus);
+
+        updateMenuItems(featureStatus);
+
+        if (global.launcherWindow && !global.launcherWindow.isDestroyed()) {
+            launcherWindow.destroy();
+        }
+    } catch (err) {
+        console.log('an error occured when trying to load ' + editorUrl);
+        console.error(err);
+
+        dialog.showMessageBox({
+            type: 'info',
+            buttons: [],
+            title: 'bitsy-savior',
+            message: 'an error occured when trying to load the editor',
+            detail: editorUrl,
+        });
+        win.close();
+    }
 }
 
 function updateMenuItems(featureStatus) {
