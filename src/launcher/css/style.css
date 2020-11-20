@@ -90,7 +90,7 @@ input[type="radio"]:checked + label {
 }
 
 .editorListLabel:hover {
-    background-color: rgb(255,211,214);
+    background-color: #ffd3d6;
 }
 
 .editorTypeLabel {
@@ -101,7 +101,7 @@ input[type="radio"]:checked + label {
 }
 
 .editorTypeLabel:hover {
-    background-color: rgb(255,211,214);
+    background-color: #ffd3d6;
 }
 
 .credits {
