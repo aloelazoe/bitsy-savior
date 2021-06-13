@@ -30,6 +30,6 @@
     "compare-versions": "^3.5.1",
     "fs-extra": "^8.1.0",
     "node-fetch": "^2.6.0",
-    "normalize-url": "^5.3.0"
+    "normalize-url": "^5.3.1"
   }
 }
